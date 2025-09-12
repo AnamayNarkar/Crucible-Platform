@@ -4,7 +4,7 @@ import RegisterBox from '../components/auth/RegisterBox';
 import authPageSuspense from '../assets/authPageSuspense.png';
 const Spline = lazy(() => import('@splinetool/react-spline'));
 
-const AuthPage = () => {
+const AuthPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
 
   const toggleMode = () => {
