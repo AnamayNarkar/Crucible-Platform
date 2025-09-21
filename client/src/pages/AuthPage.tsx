@@ -14,7 +14,7 @@ const AuthPage: React.FC = () => {
   return (
     <div className="h-screen w-screen flex items-center justify-center relative overflow-hidden">
       <div className="absolute inset-0 z-0">
-        <Suspense fallback={<img src={authPageSuspense} alt="Loading..." className="w-full h-full object-cover" />}>
+        <Suspense fallback={<img src={authPageSuspense} className="w-full h-full object-cover" />}>
           <Spline
             scene="https://prod.spline.design/BM9pMnyl7DnNoLfW/scene.splinecode"
           />

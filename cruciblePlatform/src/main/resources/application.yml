@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: cruciblePlatform
+
+  r2dbc:
+    url: ${SPRING_R2DBC_URL:r2dbc:postgresql://localhost:5432/crucible}
+    username: ${SPRING_R2DBC_USERNAME:crucible_user}
+    password: ${SPRING_R2DBC_PASSWORD:secret}
+
+  datasource:   # Needed for Flyway (JDBC)
+    url: ${SPRING_JDBC_URL:jdbc:postgresql://localhost:5432/crucible}
+    username: ${SPRING_JDBC_USERNAME:crucible_user}
+    password: ${SPRING_JDBC_PASSWORD:secret}
+    driver-class-name: org.postgresql.Driver
+
+  data:
+    redis:
+      host: ${SPRING_REDIS_HOST:localhost}
+      port: ${SPRING_REDIS_PORT:6379}
+      password: ${SPRING_REDIS_PASSWORD:}
+
+  session:
+    store-type: redis
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+server:
+  reactive:
+    session:
+      timeout: 24h
