@@ -9,10 +9,9 @@ public class ResponseEntity<T> {
     private String message;
     private String messageForUser;
 
-    public ResponseEntity(Integer statusCode, T data,String message, String messageForUser) {
+    public ResponseEntity(Integer statusCode, T data, String message) {
         this.data = data;
         this.message = message; 
-        this.messageForUser = messageForUser;
         this.statusCode = statusCode;
     }    
 }

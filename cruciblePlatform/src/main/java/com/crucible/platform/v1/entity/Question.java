@@ -1,34 +1,33 @@
 package com.crucible.platform.v1.entity;
 
-import org.springframework.data.annotation.Id;
+import java.time.LocalDateTime;
+
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.relational.core.mapping.Table;
 
-import lombok.Data;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
 @Data
-@Table("contests")
+@Table("questions")
 @AllArgsConstructor
 @NoArgsConstructor
-public class Contest {
-
+public class Question {
     @Id
     private Long id;
 
-    private String name;
-    private String markdownDescription;
     private Long creatorId;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
+    private String title;
+    private String markdownDescription;
+    private Integer points;
 
     @CreatedDate
     private LocalDateTime createdAt;
 
     @LastModifiedDate
     private LocalDateTime updatedAt;
+
 }

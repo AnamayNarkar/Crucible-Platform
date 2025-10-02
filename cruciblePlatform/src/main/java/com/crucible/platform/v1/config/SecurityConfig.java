@@ -13,7 +13,6 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import com.crucible.platform.v1.security.CustomAuthenticationFailureHandler;
-
 import com.crucible.platform.v1.repository.UserRepository;
 
 @Configuration
@@ -60,7 +59,6 @@ public class SecurityConfig{
             .formLogin(formLogin ->
                 formLogin
                     .loginPage("/api/v1/auth/login") // URL for your GET controller to show login prompt
-                    // .loginProcessingUrl("/api/v1/auth/perform_login") // URL to POST username/password to. Spring handles this!
                     .authenticationSuccessHandler(successHandler)
                     .authenticationFailureHandler(failureHandler) 
             )

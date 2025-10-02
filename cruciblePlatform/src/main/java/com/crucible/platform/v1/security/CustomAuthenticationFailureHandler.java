@@ -17,11 +17,9 @@ public class CustomAuthenticationFailureHandler implements ServerAuthenticationF
     public Mono<Void> onAuthenticationFailure(WebFilterExchange webFilterExchange, AuthenticationException exception) {
         ServerHttpResponse response = webFilterExchange.getExchange().getResponse();
         
-        // Set up the failure response headers
         response.setStatusCode(HttpStatus.UNAUTHORIZED);
         response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
         
-        // Log the error for debugging purposes (optional but recommended)
         System.err.println("🛑 Authentication failed: " + exception.getMessage());
 
         // Create a generic error message for the client for security

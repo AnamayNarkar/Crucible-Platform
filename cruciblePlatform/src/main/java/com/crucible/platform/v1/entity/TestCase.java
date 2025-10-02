@@ -1,30 +1,27 @@
 package com.crucible.platform.v1.entity;
 
-import org.springframework.data.annotation.Id;
+import java.time.LocalDateTime;
+
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.relational.core.mapping.Table;
 
-import lombok.Data;
 import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
-
+@Table("test_cases")
 @Data
-@Table("contests")
 @AllArgsConstructor
 @NoArgsConstructor
-public class Contest {
-
+public class TestCase{
     @Id
     private Long id;
-
-    private String name;
-    private String markdownDescription;
-    private Long creatorId;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
+    private Long questionId;
+    private String input;
+    private String expectedOutput;
+    private Boolean isSample;
 
     @CreatedDate
     private LocalDateTime createdAt;

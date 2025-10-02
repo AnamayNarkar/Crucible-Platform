@@ -18,6 +18,7 @@ public class User {
 
     @Indexed
     private String username;
+    private String email;
     private String hashedPassword;
     private String[] roles;
 }
