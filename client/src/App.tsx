@@ -1,10 +1,11 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import AuthPage from './pages/AuthPage';
+import DashboardLayout from './customComponents/global/DashboardLayout';
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <h1 className="text-2xl">Home</h1>,
+    element: <DashboardLayout children={<div>Home Content</div>} />
   },
   {
     path: "/auth",

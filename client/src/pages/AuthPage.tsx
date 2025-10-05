@@ -1,13 +1,17 @@
 import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { login } from '../services/state/slice/auth';
+import type { AppDispatch, RootState } from '../services/state/store';
+import { register } from '../services/api/auth';
+import { cn } from '../lib/utils';
+import { OrbitingCircles } from '../components/ui/orbiting-circles';
 import { InteractiveGridPattern } from '../customComponents/auth/InteractiveGridPattern';
+import linuxLogo from '../assets/languages/linux.svg';
 import reactLogo from '../assets/languages/react.svg';
 import javaLogo from '../assets/languages/java.svg';
 import goLogo from '../assets/languages/go-logo.svg';
 import cLogo from '../assets/languages/c.svg';
-import linuxLogo from '../assets/languages/linux.svg';
-import { OrbitingCircles } from '../components/ui/orbiting-circles';
-import { cn } from '@/lib/utils';
-import {Github} from "lucide-react"
+import { useNavigate } from 'react-router-dom';
 
 const AuthPage: React.FC = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -17,6 +21,10 @@ const AuthPage: React.FC = () => {
     confirmPassword: '',
     name: ''
   });
+
+  const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
+  const { loading, error } = useSelector((state: RootState) => state.login);
 
   const resetForm = () => {
     setFormData({
@@ -34,9 +42,31 @@ const AuthPage: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(isLogin ? 'Login' : 'Register', formData);
+    if (isLogin) {
+      try {
+        await dispatch(login({ emailOrUsername: formData.email, password: formData.password }));
+        navigate('/');
+      } catch (err) {
+        console.error(err);
+      }
+    } else {
+      if (formData.password !== formData.confirmPassword) {
+        // You should probably handle this with a more user-friendly error message
+        console.error("Passwords don't match");
+        return;
+      }
+      try {
+        await register(formData.name, formData.email, formData.password);
+        // Optionally, you can automatically log in the user after registration
+        await dispatch(login({ emailOrUsername: formData.email, password: formData.password }));
+        navigate('/');
+      } catch (err) {
+        // The error is already handled in the api service, but you might want to show a notification here
+        console.error(err);
+      }
+    }
   };
 
   return (
@@ -59,25 +89,19 @@ const AuthPage: React.FC = () => {
               isLogin ? "translate-x-0" : "translate-x-full"
             )}></div>
             <button
-              onClick={() => {
-                setIsLogin(true);
-                resetForm();
-              }}
+              onClick={() => { setIsLogin(true); resetForm(); }}
               className={cn(
-                "flex-1 py-3 px-6 rounded-lg font-medium transition-all duration-300 cursor-pointer relative z-10",
-                isLogin ? "text-white" : "text-gray-500 hover:text-gray-700"
+                "w-1/2 py-2.5 rounded-lg text-center font-semibold transition-colors duration-300 relative z-10 cursor-pointer",
+                isLogin ? "text-white" : "text-gray-600 hover:text-gray-800"
               )}
             >
               Login
             </button>
             <button
-              onClick={() => {
-                setIsLogin(false);
-                resetForm();
-              }}
+              onClick={() => { setIsLogin(false); resetForm(); }}
               className={cn(
-                "flex-1 py-3 px-6 rounded-lg font-medium transition-all duration-300 cursor-pointer relative z-10",
-                !isLogin ? "text-white" : "text-gray-500 hover:text-gray-700"
+                "w-1/2 py-2.5 rounded-lg text-center font-semibold transition-colors duration-300 relative z-10 cursor-pointer",
+                !isLogin ? "text-white" : "text-gray-600 hover:text-gray-800"
               )}
             >
               Register
@@ -86,86 +110,54 @@ const AuthPage: React.FC = () => {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className={cn(
-              "space-y-2 transition-all duration-500 ease-in-out overflow-hidden",
-              !isLogin 
-                ? "max-h-[100px] opacity-100 transform translate-y-0" 
-                : "max-h-0 opacity-0 transform -translate-y-4"
-            )}>
-              <label htmlFor="name" className="text-sm font-medium text-gray-700">
-                Full Name
-              </label>
+            {!isLogin && (
               <input
-                id="name"
-                name="name"
                 type="text"
-                required={!isLogin}
+                name="name"
+                placeholder="Name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 rounded-lg bg-white/50 backdrop-blur-sm border border-gray-300/50 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
-                placeholder="Enter your full name"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-gray-700">
-                Email Address
-              </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
                 required
-                value={formData.email}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 rounded-lg bg-white/50 backdrop-blur-sm border border-gray-300/50 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
-                placeholder="Enter your email"
+                className="w-full px-4 py-3 rounded-lg bg-white/70 backdrop-blur-sm border border-gray-300/60 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
               />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-gray-700">
-                Password
-              </label>
+            )}
+            <input
+              type="email"
+              name="email"
+              placeholder="Email"
+              value={formData.email}
+              onChange={handleInputChange}
+              required
+              className="w-full px-4 py-3 rounded-lg bg-white/70 backdrop-blur-sm border border-gray-300/60 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            />
+            <input
+              type="password"
+              name="password"
+              placeholder="Password"
+              value={formData.password}
+              onChange={handleInputChange}
+              required
+              className="w-full px-4 py-3 rounded-lg bg-white/70 backdrop-blur-sm border border-gray-300/60 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            />
+            {!isLogin && (
               <input
-                id="password"
-                name="password"
                 type="password"
-                required
-                value={formData.password}
-                onChange={handleInputChange}
-                className="w-full px-4 py-3 rounded-lg bg-white/50 backdrop-blur-sm border border-gray-300/50 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
-                placeholder="Enter your password"
-              />
-            </div>
-
-            <div className={cn(
-              "space-y-2 transition-all duration-500 ease-in-out overflow-hidden",
-              !isLogin 
-                ? "max-h-[100px] opacity-100 transform translate-y-0" 
-                : "max-h-0 opacity-0 transform -translate-y-4"
-            )}>
-              <label htmlFor="confirmPassword" className="text-sm font-medium text-gray-700">
-                Confirm Password
-              </label>
-              <input
-                id="confirmPassword"
                 name="confirmPassword"
-                type="password"
-                required={!isLogin}
+                placeholder="Confirm Password"
                 value={formData.confirmPassword}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 rounded-lg bg-white/50 backdrop-blur-sm border border-gray-300/50 text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
-                placeholder="Confirm your password"
+                required
+                className="w-full px-4 py-3 rounded-lg bg-white/70 backdrop-blur-sm border border-gray-300/60 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
               />
-            </div>
-
+            )}
             <button
               type="submit"
-              className="w-full py-3 px-6 rounded-lg bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 hover:from-blue-500 hover:via-blue-600 hover:to-blue-700 text-white font-medium shadow-lg transform transition-all duration-300 hover:scale-105 hover:shadow-blue-500/25 cursor-pointer"
+              disabled={loading}
+              className="w-full py-3 rounded-lg bg-gradient-to-r from-blue-400 to-blue-500 text-white font-semibold hover:from-blue-500 hover:to-blue-600 transition-all duration-300 disabled:opacity-50 cursor-pointer"
             >
-              {isLogin ? 'Sign In' : 'Create Account'}
+              {loading ? 'Processing...' : (isLogin ? 'Login' : 'Register')}
             </button>
+            {error && <p className="text-red-500 text-sm text-center">{error}</p>}
           </form>
 
           {/* Additional Options */}

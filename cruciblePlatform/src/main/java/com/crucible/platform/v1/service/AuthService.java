@@ -8,6 +8,7 @@ import com.crucible.platform.v1.dto.ResponseEntity;
 import com.crucible.platform.v1.entity.User;
 import com.crucible.platform.v1.repository.UserRepository;
 import com.crucible.platform.v1.dto.auth.UserRegistrationDTO;
+import com.crucible.platform.v1.dto.auth.UserRegistrationResponse;
 
 @Service
 public class AuthService {
@@ -19,9 +20,9 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public Mono<ResponseEntity<User>> register(UserRegistrationDTO body) {
+    public Mono<ResponseEntity<UserRegistrationResponse>> register(UserRegistrationDTO body) {
         return userRepository.findByUsername(body.getUsername())
-                .flatMap(existingUser -> Mono.just(new ResponseEntity<User>(409, null, "User already exists")))
+                .flatMap(existingUser -> Mono.just(new ResponseEntity<UserRegistrationResponse>(409, null, "User already exists")))
                 .switchIfEmpty(Mono.defer(() -> {
                     String hashedPassword = passwordEncoder.encode(body.getPassword());
 
@@ -34,7 +35,13 @@ public class AuthService {
                     return userRepository.save(newUser)
                             .map(savedUser -> {
                                 savedUser.setHashedPassword(null);
-                                return new ResponseEntity<>(1, savedUser, "Registration successful");
+                                UserRegistrationResponse response = new UserRegistrationResponse(
+                                        savedUser.getId().toString(),
+                                        savedUser.getUsername(),
+                                        savedUser.getEmail(),
+                                        savedUser.getRoles()
+                                );
+                                return new ResponseEntity<>(1, response, "Registration successful");
                             });
                 }));
     }

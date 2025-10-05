@@ -10,7 +10,7 @@ import reactor.core.publisher.Mono;
 import com.crucible.platform.v1.service.AuthService;
 import com.crucible.platform.v1.dto.ResponseEntity;
 import com.crucible.platform.v1.dto.auth.UserRegistrationDTO;
-import com.crucible.platform.v1.entity.User;
+import com.crucible.platform.v1.dto.auth.UserRegistrationResponse;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -23,7 +23,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public Mono<ResponseEntity<User>> register(@RequestBody UserRegistrationDTO body) {
+    public Mono<ResponseEntity<UserRegistrationResponse>> register(@RequestBody UserRegistrationDTO body) {
         return authService.register(body);
     }
 
