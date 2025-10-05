@@ -94,3 +94,10 @@ CREATE INDEX idx_contest_questions_contest_id ON contest_questions(contest_id);
 CREATE INDEX idx_contest_questions_question_id ON contest_questions(question_id);
 CREATE INDEX idx_contest_admins_contest_id ON contest_admins(contest_id);
 CREATE INDEX idx_contest_admins_admin_id ON contest_admins(admin_id);
+
+-- classify as a postgresql migration
+
+BEGIN 
+    RAISE NOTICE 'PostgreSQL migration loaded.'; 
+END 
+$$;
