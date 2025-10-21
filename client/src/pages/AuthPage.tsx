@@ -46,24 +46,25 @@ const AuthPage: React.FC = () => {
     e.preventDefault();
     if (isLogin) {
       try {
-        await dispatch(login({ emailOrUsername: formData.email, password: formData.password }));
-        navigate('/');
+        const resultAction = await dispatch(login({ emailOrUsername: formData.email, password: formData.password }));
+        if (login.fulfilled.match(resultAction)) {
+          navigate('/');
+        }
       } catch (err) {
-        console.error(err);
+        console.error("An unexpected error occurred:", err);
       }
     } else {
       if (formData.password !== formData.confirmPassword) {
-        // You should probably handle this with a more user-friendly error message
         console.error("Passwords don't match");
         return;
       }
       try {
         await register(formData.name, formData.email, formData.password);
-        // Optionally, you can automatically log in the user after registration
-        await dispatch(login({ emailOrUsername: formData.email, password: formData.password }));
-        navigate('/');
+        const resultAction = await dispatch(login({ emailOrUsername: formData.email, password: formData.password }));
+        if (login.fulfilled.match(resultAction)) {
+          navigate('/');
+        }
       } catch (err) {
-        // The error is already handled in the api service, but you might want to show a notification here
         console.error(err);
       }
     }

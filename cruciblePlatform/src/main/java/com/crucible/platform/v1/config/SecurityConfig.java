@@ -13,6 +13,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import com.crucible.platform.v1.security.CustomAuthenticationFailureHandler;
+import com.crucible.platform.v1.security.CustomLogoutSuccessHandler;
 import com.crucible.platform.v1.repository.UserRepository;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.reactive.CorsConfigurationSource;
@@ -63,7 +64,7 @@ public class SecurityConfig {
   @Bean
   public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http,
       ServerAuthenticationSuccessHandler successHandler, CustomAuthenticationFailureHandler failureHandler,
-      ServerAuthenticationEntryPoint entryPoint) {
+      ServerAuthenticationEntryPoint entryPoint, CustomLogoutSuccessHandler logoutSuccessHandler) {
     http
         .csrf(csrf -> csrf.disable())
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -79,7 +80,8 @@ public class SecurityConfig {
             .loginPage("/api/v1/auth/login") // URL for your GET controller to show login prompt
             .authenticationSuccessHandler(successHandler)
             .authenticationFailureHandler(failureHandler))
-        .logout(logout -> logout.logoutUrl("/api/v1/auth/logout"));
+        .logout(logout -> logout.logoutUrl("/api/v1/auth/logout")
+            .logoutSuccessHandler(logoutSuccessHandler));
 
     return http.build();
   }
