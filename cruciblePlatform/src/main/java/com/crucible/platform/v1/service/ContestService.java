@@ -31,7 +31,7 @@ public class ContestService {
         if (userId == null) {
             return Mono.just(new ResponseEntity<>(401, null, "User not authenticated"));
         }
-        Contest contest = new Contest(null, dto.getName(), dto.getMarkdownDescription(), userId, dto.getStartTime(), dto.getEndTime(), null, null);
+        Contest contest = new Contest(null, dto.getName(), dto.getBannerImageUrl(),dto.getMarkdownDescription(), userId, dto.getStartTime(), dto.getEndTime(), null, null);
         return contestRepository.save(contest)
                 .map(savedContest -> new ResponseEntity<>(201, savedContest, "Contest created successfully"));
     }

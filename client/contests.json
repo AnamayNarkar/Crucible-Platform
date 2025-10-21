@@ -1,0 +1,106 @@
+{
+  "userContests": [
+    {
+      "id": 1,
+      "name": "Spring Code Challenge 2025",
+      "bannerImageUrl": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800",
+      "cardDescription": "Dive into data structures and algorithms in this comprehensive challenge.",
+      "markdownDescription": "# Spring Code Challenge 2025\n\nWelcome to the ultimate coding challenge of the season! This contest covers a wide range of topics including:\n\n- **Data Structures**: Arrays, Linked Lists, Trees, Graphs\n- **Algorithms**: Sorting, Searching, Dynamic Programming\n- **Problem Solving**: Real-world scenarios and optimization\n\n## Prizes\n\n- 1st Place: $1000 + Certificate\n- 2nd Place: $500 + Certificate\n- 3rd Place: $250 + Certificate\n\nParticipants will have 4 hours to solve as many problems as possible. Good luck!",
+      "creatorId": 1,
+      "startTime": "2025-11-01T10:00:00",
+      "endTime": "2025-11-01T14:00:00",
+      "createdAt": "2025-10-15T08:00:00",
+      "updatedAt": "2025-10-15T08:00:00"
+    },
+    {
+      "id": 2,
+      "name": "Algorithm Masters",
+      "bannerImageUrl": "https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800",
+      "cardDescription": "Test your skills in advanced algorithms and competitive programming.",
+      "markdownDescription": "# Algorithm Masters Contest\n\nChallenge yourself with the most advanced algorithms in competitive programming!\n\n## Topics Covered\n\n- **Graph Algorithms**: Dijkstra, Bellman-Ford, Floyd-Warshall\n- **Advanced Data Structures**: Tries, Segment Trees, Fenwick Trees\n- **Optimization Techniques**: Greedy, Divide and Conquer, Backtracking\n\n## Rules\n\n- Time Limit: 3 hours\n- Languages Allowed: C++, Java, Python\n- Scoring: Based on correctness and efficiency\n\nJoin the masters and prove your algorithmic prowess!",
+      "creatorId": 1,
+      "startTime": "2025-10-25T15:00:00",
+      "endTime": "2025-10-25T18:00:00",
+      "createdAt": "2025-10-10T12:00:00",
+      "updatedAt": "2025-10-10T12:00:00"
+    }
+  ],
+  "ongoingContests": [
+    {
+      "id": 3,
+      "name": "Real-time Coding Battle",
+      "bannerImageUrl": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800",
+      "cardDescription": "Experience live coding competition with real-time challenges.",
+      "markdownDescription": "# Real-time Coding Battle\n\nThe battle is on! Compete in this live coding event happening right now.\n\n## Features\n\n- **Live Leaderboard**: See rankings update in real-time\n- **Instant Feedback**: Get immediate results on submissions\n- **Diverse Problems**: From easy to expert level\n\n## Duration\n\nStarts: 9:00 AM | Ends: 11:59 PM\n\nDon't miss out – code now and climb the leaderboard!",
+      "creatorId": 2,
+      "startTime": "2025-10-21T09:00:00",
+      "endTime": "2025-10-21T23:59:00",
+      "createdAt": "2025-10-20T08:00:00",
+      "updatedAt": "2025-10-20T08:00:00"
+    }
+  ],
+  "upcomingContests": [
+    {
+      "id": 4,
+      "name": "Winter Hackathon 2025",
+      "bannerImageUrl": "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800",
+      "cardDescription": "Join the biggest hackathon of the year for innovation and creativity.",
+      "markdownDescription": "# Winter Hackathon 2025\n\nGet ready for 48 hours of non-stop innovation!\n\n## Themes\n\n- **AI & Machine Learning**\n- **Web Development**\n- **Mobile Apps**\n- **Open Innovation**\n\n## Schedule\n\n- **Day 1**: Opening ceremony, team formation, hacking begins\n- **Day 2**: Workshops, mentoring, continued hacking\n- **Day 3**: Presentations, judging, closing ceremony\n\nPrizes worth $10,000 up for grabs. Teams of 2-4 members welcome!",
+      "creatorId": 3,
+      "startTime": "2025-12-15T10:00:00",
+      "endTime": "2025-12-17T18:00:00",
+      "createdAt": "2025-10-18T10:00:00",
+      "updatedAt": "2025-10-18T10:00:00"
+    },
+    {
+      "id": 5,
+      "name": "Data Structures Pro",
+      "bannerImageUrl": "https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=800",
+      "cardDescription": "Master advanced data structures and enhance your problem-solving skills.",
+      "markdownDescription": "# Data Structures Pro Challenge\n\nElevate your understanding of data structures to the next level.\n\n## Key Topics\n\n- **Heaps and Priority Queues**\n- **Balanced Trees**: AVL, Red-Black\n- **Hash Tables and Hashing**\n- **Advanced Graphs**\n\n## Challenge Format\n\n- 3-hour timed contest\n- 5-7 problems of increasing difficulty\n- Focus on efficiency and correctness\n\nPerfect for intermediate to advanced programmers!",
+      "creatorId": 4,
+      "startTime": "2025-11-10T14:00:00",
+      "endTime": "2025-11-10T17:00:00",
+      "createdAt": "2025-10-19T15:00:00",
+      "updatedAt": "2025-10-19T15:00:00"
+    },
+    {
+      "id": 6,
+      "name": "Frontend Masters Challenge",
+      "bannerImageUrl": "https://images.unsplash.com/photo-1633356122544-f134324a6cee?w=800",
+      "cardDescription": "Showcase your frontend development expertise in this exciting challenge.",
+      "markdownDescription": "# Frontend Masters Challenge\n\nDemonstrate your frontend wizardry!\n\n## Technologies\n\n- **React & Vue.js**\n- **CSS Frameworks**: Tailwind, Bootstrap\n- **JavaScript ES6+**\n- **Performance Optimization**\n\n## Tasks\n\n- Build responsive web components\n- Optimize for speed and accessibility\n- Implement modern UI/UX patterns\n\n4 hours to create stunning frontend solutions. Judges will evaluate creativity, code quality, and user experience.",
+      "creatorId": 5,
+      "startTime": "2025-11-20T12:00:00",
+      "endTime": "2025-11-20T16:00:00",
+      "createdAt": "2025-10-20T09:00:00",
+      "updatedAt": "2025-10-20T09:00:00"
+    }
+  ],
+  "pastContests": [
+    {
+      "id": 7,
+      "name": "October Programming Sprint",
+      "bannerImageUrl": "https://images.unsplash.com/photo-1587620962725-abab7fe55159?w=800",
+      "cardDescription": "A fast-paced programming competition that tested speed and accuracy.",
+      "markdownDescription": "# October Programming Sprint\n\nThis sprint challenged participants with quick problem-solving under time pressure.\n\n## Highlights\n\n- **Speed Coding**: Solve problems in minimal time\n- **Variety**: Mix of algorithmic and logical puzzles\n- **Real-time Scoring**: Instant feedback on submissions\n\n## Results\n\n- Winner: Alice Johnson (120 points)\n- Runner-up: Bob Smith (115 points)\n- Third: Carol Lee (110 points)\n\nThanks to all participants! Stay tuned for the next event.",
+      "creatorId": 6,
+      "startTime": "2025-10-10T10:00:00",
+      "endTime": "2025-10-10T14:00:00",
+      "createdAt": "2025-10-05T08:00:00",
+      "updatedAt": "2025-10-05T08:00:00"
+    },
+    {
+      "id": 8,
+      "name": "Beginner's Bootcamp",
+      "bannerImageUrl": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=800",
+      "cardDescription": "An introductory contest for newcomers to competitive programming.",
+      "markdownDescription": "# Beginner's Bootcamp\n\nPerfect for those new to coding competitions!\n\n## What We Covered\n\n- **Basic Programming Concepts**\n- **Simple Algorithms**: Loops, conditionals\n- **Problem Solving Strategies**\n- **Contest Etiquette**\n\n## Bootcamp Structure\n\n- Warm-up problems (easy)\n- Progressive difficulty\n- Hints and tutorials available\n- Encouraging community support\n\nOver 500 beginners participated. Hope to see you in advanced contests soon!",
+      "creatorId": 7,
+      "startTime": "2025-10-05T13:00:00",
+      "endTime": "2025-10-05T16:00:00",
+      "createdAt": "2025-09-30T10:00:00",
+      "updatedAt": "2025-09-30T10:00:00"
+    }
+  ]
+}

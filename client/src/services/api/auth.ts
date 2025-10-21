@@ -1,5 +1,5 @@
 import axiosInstance from "./axiosInstance";
-import handleApiError from "./errorHandling";
+import { handleApiError } from "./errorHandling";
 
 export interface LoginCredentials {
     emailOrUsername: string;
@@ -26,7 +26,7 @@ export async function login(emailOrUsername: string, password: string): Promise<
         });
         return response.data;
     } catch (error: any) {
-        handleApiError(error, 'Login failed');
+        return handleApiError(error, 'Login failed');
     }
 }
 
@@ -39,7 +39,17 @@ export async function register(username: string, email: string, password: string
         });
         return response.data as RegistrationResponse;
     } catch (error: any) {
-        handleApiError(error, 'Registration failed');
+        return handleApiError(error, 'Registration failed');
+    }
+}
+
+export async function verifySession(): Promise<any> {
+    try {
+        const response = await axiosInstance.get('/auth/verify-session');
+        return response.data;
+    }
+    catch (error: any) {
+        return handleApiError(error, 'Session verification failed');
     }
 }
 
@@ -48,6 +58,6 @@ export async function logout(): Promise<any> {
         const response = await axiosInstance.post('/auth/logout');
         return response.data;
     } catch (error: any) {
-        handleApiError(error, 'Logout failed');
+        return handleApiError(error, 'Logout failed');
     }
 }

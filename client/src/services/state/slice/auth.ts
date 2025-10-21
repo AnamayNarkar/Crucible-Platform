@@ -1,13 +1,22 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { login as apiLogin, logout as apiLogout, type LoginCredentials } from '../../api/auth';
 
-interface LoginState {
+interface User {
+  id: string;
+  username: string;
+  email: string;
+  roles: string[];
+}
+
+interface AuthState {
+  user: User | null;
   isLoggedIn: boolean;
   loading: boolean;
   error: string | null;
 }
 
-const initialState: LoginState = {
+const initialState: AuthState = {
+  user: null,
   isLoggedIn: false,
   loading: false,
   error: null,
@@ -22,8 +31,8 @@ export const logout = createAsyncThunk('auth/logout', async () => {
   await apiLogout();
 });
 
-const loginSlice = createSlice({
-  name: 'login',
+const authSlice = createSlice({
+  name: 'auth',
   initialState,
   reducers: {},
   extraReducers: (builder) => {
@@ -32,19 +41,23 @@ const loginSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(login.fulfilled, (state) => {
+      .addCase(login.fulfilled, (state, action) => {
+        state.user = action.payload;
         state.isLoggedIn = true;
         state.loading = false;
       })
       .addCase(login.rejected, (state, action) => {
+        state.user = null;
         state.isLoggedIn = false;
         state.loading = false;
         state.error = action.error.message || 'Failed to login';
       })
       .addCase(logout.fulfilled, (state) => {
+        state.user = null;
         state.isLoggedIn = false;
+        state.error = null;
       });
   },
 });
 
-export default loginSlice.reducer;
+export default authSlice.reducer;

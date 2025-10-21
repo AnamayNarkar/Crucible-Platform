@@ -11,6 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CreateContest {
     private String name;
+    private String bannerImageUrl;
     private String markdownDescription;
     private LocalDateTime startTime;
     private LocalDateTime endTime;

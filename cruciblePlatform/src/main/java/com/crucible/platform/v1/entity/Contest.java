@@ -17,18 +17,20 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class Contest {
 
-    @Id
-    private Long id;
+  @Id
+  private Long id;
 
-    private String name;
-    private String markdownDescription;
-    private Long creatorId;
-    private LocalDateTime startTime;
-    private LocalDateTime endTime;
+  private String name;
+  private String bannerImageUrl;
+  private String cardDescription;
+  private String markdownDescription;
+  private Long creatorId;
+  private LocalDateTime startTime;
+  private LocalDateTime endTime;
 
-    @CreatedDate
-    private LocalDateTime createdAt;
+  @CreatedDate
+  private LocalDateTime createdAt;
 
-    @LastModifiedDate
-    private LocalDateTime updatedAt;
+  @LastModifiedDate
+  private LocalDateTime updatedAt;
 }

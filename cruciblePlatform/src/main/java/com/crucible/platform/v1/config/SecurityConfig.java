@@ -21,68 +21,67 @@ import java.util.Arrays;
 
 @Configuration
 @EnableReactiveMethodSecurity
-public class SecurityConfig{
+public class SecurityConfig {
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
 
-    @Bean
-    public ReactiveUserDetailsService userDetailsService(UserRepository userRepository) {
-        return username -> userRepository.findByUsername(username).
-                switchIfEmpty(userRepository.findByEmail(username))
-                .map(myUser -> User.builder()
-                        .username(myUser.getUsername())
-                        .password(myUser.getHashedPassword())
-                        .roles(myUser.getRoles())
-                        .build()
-                );
-    }
+  @Bean
+  public ReactiveUserDetailsService userDetailsService(UserRepository userRepository) {
+    return username -> userRepository.findByUsername(username).switchIfEmpty(userRepository.findByEmail(username))
+        .map(myUser -> User.builder()
+            .username(myUser.getUsername())
+            .password(myUser.getHashedPassword())
+            .roles(myUser.getRoles())
+            .build());
+  }
 
-    @Bean
-    public ReactiveUserDetailsPasswordService userDetailsPasswordService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
-        return (user, newPassword) -> userRepository.findByUsername(user.getUsername())
-                .switchIfEmpty(userRepository.findByEmail(user.getUsername()))
-                .doOnNext(myUser -> myUser.setHashedPassword(passwordEncoder.encode(newPassword)))
-                .flatMap(userRepository::save)
-                .thenReturn(user);
-    }
+  @Bean
+  public ReactiveUserDetailsPasswordService userDetailsPasswordService(UserRepository userRepository,
+      PasswordEncoder passwordEncoder) {
+    return (user, newPassword) -> userRepository.findByUsername(user.getUsername())
+        .switchIfEmpty(userRepository.findByEmail(user.getUsername()))
+        .doOnNext(myUser -> myUser.setHashedPassword(passwordEncoder.encode(newPassword)))
+        .flatMap(userRepository::save)
+        .thenReturn(user);
+  }
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(true);
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
-    
-    @Bean
-    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http, ServerAuthenticationSuccessHandler successHandler, CustomAuthenticationFailureHandler failureHandler, ServerAuthenticationEntryPoint entryPoint) {
-        http
-            .csrf(csrf -> csrf.disable())
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .authorizeExchange(exchanges -> exchanges
-                .pathMatchers("/api/v1/auth/**").permitAll()
-                .pathMatchers("/api/v1/contests/**").authenticated()
-                .anyExchange().authenticated()
-            ).
-            exceptionHandling(exceptions -> 
-                exceptions.authenticationEntryPoint(entryPoint)
-            )
-            .formLogin(formLogin ->
-                formLogin
-                    .loginPage("/api/v1/auth/login") // URL for your GET controller to show login prompt
-                    .authenticationSuccessHandler(successHandler)
-                    .authenticationFailureHandler(failureHandler) 
-            )
-            .logout(logout -> logout.logoutUrl("/api/v1/auth/logout"));
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration configuration = new CorsConfiguration();
+    configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+    configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+    configuration.setAllowedHeaders(Arrays.asList("*"));
+    configuration.setAllowCredentials(true);
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+    return source;
+  }
 
-        return http.build();
-    }
+  @Bean
+  public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http,
+      ServerAuthenticationSuccessHandler successHandler, CustomAuthenticationFailureHandler failureHandler,
+      ServerAuthenticationEntryPoint entryPoint) {
+    http
+        .csrf(csrf -> csrf.disable())
+        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .authorizeExchange(exchanges -> exchanges
+            .pathMatchers(
+                "/api/v1/auth/login", // Handled by formLogin
+                "/api/v1/auth/logout", // Handled by logout
+                "/api/v1/auth/register" // Your custom controller
+            ).permitAll()
+            .anyExchange().authenticated())
+        .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(entryPoint))
+        .formLogin(formLogin -> formLogin
+            .loginPage("/api/v1/auth/login") // URL for your GET controller to show login prompt
+            .authenticationSuccessHandler(successHandler)
+            .authenticationFailureHandler(failureHandler))
+        .logout(logout -> logout.logoutUrl("/api/v1/auth/logout"));
+
+    return http.build();
+  }
 
 }

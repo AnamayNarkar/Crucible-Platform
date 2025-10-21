@@ -1,5 +1,6 @@
 package com.crucible.platform.v1.controller;
 
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -16,15 +17,19 @@ import com.crucible.platform.v1.dto.auth.UserRegistrationResponse;
 @RequestMapping("/api/v1/auth")
 public class AuthController {
 
-    private final AuthService authService;
+  private final AuthService authService;
 
-    public AuthController(AuthService authService) {
-        this.authService = authService;
-    }
+  public AuthController(AuthService authService) {
+    this.authService = authService;
+  }
 
-    @PostMapping("/register")
-    public Mono<ResponseEntity<UserRegistrationResponse>> register(@RequestBody UserRegistrationDTO body) {
-        return authService.register(body);
-    }
+  @PostMapping("/register")
+  public Mono<ResponseEntity<UserRegistrationResponse>> register(@RequestBody UserRegistrationDTO body) {
+    return authService.register(body);
+  }
 
+  @GetMapping("/verify-session")
+  public Mono<ResponseEntity<String>> verifySession() {
+    return Mono.just(new ResponseEntity<>(200, "Hello bitch, your session is valid", "yay"));
+  }
 }

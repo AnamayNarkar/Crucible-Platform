@@ -10,6 +10,8 @@ CREATE TABLE users (
 CREATE TABLE contests (
     id BIGSERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
+    banner_image_url TEXT,  
+    card_description TEXT,
     markdown_description TEXT,
     creator_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
     start_time TIMESTAMP NOT NULL,
@@ -97,7 +99,8 @@ CREATE INDEX idx_contest_admins_admin_id ON contest_admins(admin_id);
 
 -- classify as a postgresql migration
 
-BEGIN 
-    RAISE NOTICE 'PostgreSQL migration loaded.'; 
-END 
+DO $$
+BEGIN
+    RAISE NOTICE 'PostgreSQL migration loaded.';
+END
 $$;

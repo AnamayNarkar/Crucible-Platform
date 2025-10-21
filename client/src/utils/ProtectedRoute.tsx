@@ -1,7 +1,7 @@
 import React, { useEffect, useState} from "react";
 import type { ReactElement } from "react";
-import axios, { AxiosError } from "axios";
 import { useNavigate } from "react-router-dom";
+import { verifySession } from "../services/api/auth";
 
 interface ProtectedRouteProps {
   element: ReactElement;
@@ -9,51 +9,34 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ element }) => {
   const navigate = useNavigate();
-
+  const [isVerified, setIsVerified] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   useEffect(() => {
-    const checkUser = async () => {
+    const checkSession = async () => {
       try {
-        const response = await axios.get("http://localhost:3000/api/auth/verifyUser", {
-          withCredentials: true,
-        });
-        if (response.status >= 200 && response.status < 300) {
-          setIsAuthenticated(true);
-        }
-      } catch (err) {
-        const error = err as AxiosError;
-        if (
-          error.response &&
-          (error.response.status === 401 || error.response.status === 403)
-        ) {
-          navigate("/auth");
-        } else {
-          console.error("Error verifying user:", error);
-        }
-      } finally {
+        await verifySession();
+        setIsVerified(true);
         setIsLoading(false);
+      } catch (error) {
+        setIsVerified(false);
+        setIsLoading(false);
+        navigate("/auth");
       }
     };
 
-    checkUser();
+    checkSession();
   }, [navigate]);
 
   if (isLoading) {
     return (
-      <div
-        style={{
-          backgroundColor: "#242424",
-          color: "#fff",
-          textAlign: "center",
-          padding: "20px",
-        }}
-      />
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+      </div>
     );
   }
 
-  return isAuthenticated ? element : null;
+  return isVerified ? element : null;
 };
 
 export default ProtectedRoute;
