@@ -61,3 +61,12 @@ export async function logout(): Promise<any> {
         return handleApiError(error, 'Logout failed');
     }
 }
+
+export async function getMe(): Promise<any> {
+    try {
+        const response = await axiosInstance.get('/auth/me');
+        return response.data;
+    } catch (error: any) {
+        return handleApiError(error, 'Failed to fetch user info');
+    }
+}

@@ -1,4 +1,8 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import type { AppDispatch } from './services/state/store';
+import { getMe } from './services/state/slice/auth';
 import AuthPage from './pages/AuthPage';
 import ServerDownPage from './pages/ServerDownPage';
 import DashboardLayout from './customComponents/global/DashboardLayout';
@@ -40,6 +44,13 @@ const router = createBrowserRouter([
 ]);
 
 function App() {
+  const dispatch = useDispatch<AppDispatch>();
+
+  useEffect(() => {
+    // Hydrate user info on app load
+    dispatch(getMe());
+  }, [dispatch]);
+
   return <RouterProvider router={router} />;
 }
 

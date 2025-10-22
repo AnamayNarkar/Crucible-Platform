@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils';
 import { 
   Trophy, 
   Bell, 
-  Search, 
   Settings, 
   LogOut,
   TrendingUp
@@ -37,8 +36,8 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       {/* Animated Background Pattern */}
       <div className="fixed inset-0 opacity-40 pointer-events-none">
         <InteractiveGridPattern 
-          className="opacity-80"
-          squaresClassName="stroke-blue-500/90 hover:fill-blue-500/30"
+          className="opacity-40"
+          squaresClassName="stroke-blue-500/50"
         />
       </div>
 
@@ -59,7 +58,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
               {/* Quick Nav */}
               <nav className="hidden md:flex items-center space-x-1">
-                <button onClick={() => navigate('/contests')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${location.pathname === '/contests' ? 'bg-gradient-to-r from-blue-400 to-blue-500 text-white shadow-lg shadow-blue-500/30' : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'}`}>
+                <button onClick={() => navigate('/contests')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${location.pathname === '/' || location.pathname === '/contests' || location.pathname==="/contests/create" ? 'bg-gradient-to-r from-blue-400 to-blue-500 text-white shadow-lg shadow-blue-500/30' : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'}`}>
                   Contests
                 </button>
                 <button onClick={() => navigate('/problems')} className={`px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer ${location.pathname === '/problems' ? 'bg-gradient-to-r from-blue-400 to-blue-500 text-white shadow-lg shadow-blue-500/30' : 'text-gray-600 hover:text-gray-900 hover:bg-white/50'}`}>
@@ -73,16 +72,6 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
             {/* Right Side Actions */}
             <div className="flex items-center space-x-3">
-              {/* Search */}
-              <div className="hidden sm:flex items-center bg-white/50 backdrop-blur-sm border border-gray-300/50 rounded-lg px-4 py-2 space-x-2 hover:border-blue-400/50 transition-all group">
-                <Search className="w-4 h-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
-                <input
-                  type="text"
-                  placeholder="Search contests..."
-                  className="bg-transparent border-none outline-none text-sm text-gray-900 placeholder-gray-500 w-48"
-                />
-              </div>
-
               {/* Notifications */}
               <div className="relative">
                 <button
@@ -171,7 +160,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
               ) : (
                 <button
                   onClick={() => navigate('/auth')}
-                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white font-medium shadow-lg shadow-blue-500/30 transform hover:scale-105 transition-all"
+                  className="px-4 py-2 rounded-lg bg-gradient-to-r from-blue-400 to-blue-500 hover:from-blue-500 hover:to-blue-600 text-white font-medium shadow-lg shadow-blue-500/30 transform hover:scale-105 transition-all cursor-pointer"
                 >
                   Login
                 </button>
