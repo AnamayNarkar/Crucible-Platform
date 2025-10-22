@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import type { AppDispatch } from './services/state/store';
@@ -12,36 +12,8 @@ import Leaderboard from './customComponents/home/Leaderboard';
 import CreateContest from './customComponents/home/CreateContest';
 import ProtectedRoute from './utils/ProtectedRoute';
 
-const router = createBrowserRouter([
-  {
-    path: "/",
-    element: <DashboardLayout children={<Contests />} />
-  },
-  {
-    path: "/contests",
-    element: <DashboardLayout children={<Contests />} />
-  },
-  {
-    path: "/problems",
-    element: <DashboardLayout children={<Problems />} />
-  },
-  {
-    path: "/leaderboard",
-    element: <DashboardLayout children={<Leaderboard />} />
-  },
-  {
-    path: "/contests/create",
-    element: <ProtectedRoute element={<DashboardLayout children={<CreateContest />} />} />
-  },
-  {
-    path: "/auth",
-    element: <AuthPage />,
-  },
-  {
-    path: "/server-down",
-    element: <ServerDownPage />,
-  },
-]);
+import { useNavigate } from 'react-router-dom';
+import { setNavigator } from './services/navigationService';
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -49,9 +21,28 @@ function App() {
   useEffect(() => {
     // Hydrate user info on app load
     dispatch(getMe());
+    return () => {}; // Cleanup if needed
   }, [dispatch]);
 
-  return <RouterProvider router={router} />;
+  const navigate = useNavigate(); 
+
+    useEffect(() => {
+        // 4. Set the external reference 
+        console.log("Setting navigator in navigationService");
+        setNavigator(navigate);
+    }, [navigate]); // Re-run if 'navigate' somehow changes (though rare)
+
+  return (
+    <Routes>
+      <Route path="/" element={<DashboardLayout children={<Contests />} />} />
+      <Route path="/contests" element={<DashboardLayout children={<Contests />} />} />
+      <Route path="/problems" element={<DashboardLayout children={<Problems />} />} />
+      <Route path="/leaderboard" element={<DashboardLayout children={<Leaderboard />} />} />
+      <Route path="/contests/create" element={<ProtectedRoute element={<DashboardLayout children={<CreateContest />} />} />} />
+      <Route path="/auth" element={<AuthPage />} />
+      <Route path="/server-down" element={<ServerDownPage />} />
+    </Routes>
+  );
 }
 
 export default App

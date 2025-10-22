@@ -13,6 +13,13 @@ interface RegistrationResponse {
     roles: string[];
 }
 
+interface getMeResponse {
+    id: string;
+    username: string;
+    email: string;
+    roles: string[];
+}
+
 export async function login(emailOrUsername: string, password: string): Promise<any> {
     const params = new URLSearchParams();
     params.append('username', emailOrUsername);
@@ -26,11 +33,16 @@ export async function login(emailOrUsername: string, password: string): Promise<
         });
         return response.data;
     } catch (error: any) {
-        return handleApiError(error, 'Login failed');
+        const result = handleApiError(error, 'Login failed');
+        // If server is down, return null to prevent further processing
+        if (result && 'isServerDown' in result) {
+            return null;
+        }
+        throw error; // Re-throw if not server down
     }
 }
 
-export async function register(username: string, email: string, password: string): Promise<RegistrationResponse> {
+export async function register(username: string, email: string, password: string): Promise<RegistrationResponse | null> {
     try {
         const response = await axiosInstance.post('/auth/register', {
             username,
@@ -39,7 +51,11 @@ export async function register(username: string, email: string, password: string
         });
         return response.data as RegistrationResponse;
     } catch (error: any) {
-        return handleApiError(error, 'Registration failed');
+        const result = handleApiError(error, 'Registration failed');
+        if (result && 'isServerDown' in result) {
+            return null;
+        }
+        throw error; // Re-throw if not server down
     }
 }
 
@@ -49,7 +65,11 @@ export async function verifySession(): Promise<any> {
         return response.data;
     }
     catch (error: any) {
-        return handleApiError(error, 'Session verification failed');
+        const result = handleApiError(error, 'Session verification failed');
+        if (result && 'isServerDown' in result) {
+            return null;
+        }
+        throw error;
     }
 }
 
@@ -58,7 +78,11 @@ export async function logout(): Promise<any> {
         const response = await axiosInstance.post('/auth/logout');
         return response.data;
     } catch (error: any) {
-        return handleApiError(error, 'Logout failed');
+        const result = handleApiError(error, 'Logout failed');
+        if (result && 'isServerDown' in result) {
+            return null;
+        }
+        throw error;
     }
 }
 
@@ -67,6 +91,10 @@ export async function getMe(): Promise<any> {
         const response = await axiosInstance.get('/auth/me');
         return response.data;
     } catch (error: any) {
-        return handleApiError(error, 'Failed to fetch user info');
+        const result = handleApiError(error, 'Failed to fetch user info');
+        if (result && 'isServerDown' in result) {
+            return null;
+        }
+        throw error;
     }
 }

@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import serverDownImage from '../assets/server-down.webp';
+import { checkHealth } from '../services/api/global';
 
 const ServerDownPage = () => {
   const navigate = useNavigate();
@@ -25,7 +26,12 @@ const ServerDownPage = () => {
         
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <button
-            onClick={() => navigate('/')}
+            onClick={async () => {
+              const result = await checkHealth();
+              if (result && !result.isServerDown) {
+                navigate('/');
+              }
+            }}
             className="px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition-colors"
           >
             Try again

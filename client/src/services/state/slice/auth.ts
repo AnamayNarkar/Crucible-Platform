@@ -47,8 +47,11 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(login.fulfilled, (state, action) => {
-        state.user = action.payload;
-        state.isLoggedIn = true;
+        // If payload is null, it means server is down (navigation already handled)
+        if (action.payload) {
+          state.user = action.payload;
+          state.isLoggedIn = true;
+        }
         state.loading = false;
       })
       .addCase(login.rejected, (state, action) => {
@@ -68,7 +71,7 @@ const authSlice = createSlice({
       })
       .addCase(getMe.fulfilled, (state, action) => {
         if (action.payload) {
-          state.user = action.payload;
+          state.user = action.payload.data;
           state.isLoggedIn = true;
         }
         state.loading = false;

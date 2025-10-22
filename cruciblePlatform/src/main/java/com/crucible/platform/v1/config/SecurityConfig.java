@@ -70,6 +70,7 @@ public class SecurityConfig {
         .cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeExchange(exchanges -> exchanges
             .pathMatchers(
+                "/api/v1/health",
                 "/api/v1/auth/login", // Handled by formLogin
                 "/api/v1/auth/logout", // Handled by logout
                 "/api/v1/auth/register" // Your custom controller

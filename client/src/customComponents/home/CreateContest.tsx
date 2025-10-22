@@ -18,7 +18,7 @@ const CreateContest = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState<ContestFormData>({
     name: '',
-    bannerImageUrl: '',
+    bannerImageUrl: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800',
     cardDescription: '',
     markdownDescription: '# Contest Description\n\nWrite your contest details here using **Markdown**!\n\n## Rules\n- Rule 1\n- Rule 2\n\n## Prizes\n🥇 First Place: $1000\n🥈 Second Place: $500\n🥉 Third Place: $250',
     startTime: '',
