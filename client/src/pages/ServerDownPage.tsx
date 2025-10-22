@@ -1,10 +1,7 @@
-import { useNavigate } from 'react-router-dom';
 import serverDownImage from '../assets/server-down.webp';
 import { checkHealth } from '../services/api/global';
 
 const ServerDownPage = () => {
-  const navigate = useNavigate();
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
       <div className="max-w-2xl w-full bg-white rounded-2xl shadow-2xl p-8 md:p-12 text-center">
@@ -29,7 +26,7 @@ const ServerDownPage = () => {
             onClick={async () => {
               const result = await checkHealth();
               if (result && !result.isServerDown) {
-                navigate('/');
+                window.location.href = '/';
               }
             }}
             className="px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition-colors"
