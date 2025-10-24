@@ -288,7 +288,7 @@ const Contests = () => {
               Create, participate, and showcase your skills.
             </p>
           </div>
-          <button className="inline-flex items-center space-x-2 px-6 py-3 mt-4 md:mt-0 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold shadow-lg shadow-blue-500/40 transform hover:scale-105 transition-all duration-300 cursor-pointer" onClick={() => navigate('/contests/create')}>
+          <button className=" z-25 inline-flex items-center space-x-2 px-6 py-3 mt-4 md:mt-0 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold shadow-lg shadow-blue-500/40 transform hover:scale-105 transition-all duration-300 cursor-pointer" onClick={() => navigate('/contests/create')}>
             <Plus className="w-5 h-5" />
             <span>Create New Contest</span>
           </button>

@@ -41,7 +41,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       </div>
 
       {/* Header */}
-      <header className="z-50 backdrop-blur-xl bg-white/70 border-b border-gray-200/50 shadow-sm sticky top-0">
+      <header className="z-50 backdrop-blur-xl bg-white/70 border-b border-gray-200/50 shadow-sm">
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo and Brand */}
@@ -188,12 +188,12 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       </header>
 
       {/* Main Content */}
-      <main className="relative z-10 max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 flex-grow">
+      <main className="relative max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 flex-grow">
         {children}
       </main>
 
       {/* Footer */}
-      <footer className="relative z-10 border-t border-gray-200/50 bg-white/40 backdrop-blur-sm mt-16">
+      <footer className="relative border-t border-gray-200/50 bg-white/40 backdrop-blur-sm mt-16">
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0">
             <p className="text-sm text-gray-600">
