@@ -10,7 +10,6 @@ import reactor.core.publisher.Mono;
 
 import com.crucible.platform.v1.dto.ResponseEntity;
 import com.crucible.platform.v1.dto.admin.AlterAdminDto;
-import com.crucible.platform.v1.entity.ContestAdmin;
 import com.crucible.platform.v1.service.AdminService;
 
 @RestController

@@ -29,7 +29,7 @@ const ServerDownPage = () => {
                 window.location.href = '/';
               }
             }}
-            className="px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition-colors"
+            className="px-6 py-3 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300 transition-colors cursor-pointer"
           >
             Try again
           </button>

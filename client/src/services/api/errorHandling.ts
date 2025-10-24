@@ -18,7 +18,9 @@ function handleApiError(error: any, defaultMessage: string): never | ApiErrorRes
         // Case 2: The server responded with an error status (4xx, 5xx)
         // We get the message from the server's response body.
         const errorMessage = error.response.data?.message || error.response.data?.error || defaultMessage;
-        throw new Error(errorMessage);
+        const err = new Error(errorMessage);
+        (err as any).status = error.response.status;
+        throw err;
         
     } else {
         // Case 3: Something else went wrong (e.g., error setting up the request)

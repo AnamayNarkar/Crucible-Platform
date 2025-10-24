@@ -21,7 +21,6 @@ import {
   UserPlus,
   Mail,
   X,
-  AlertCircle,
   CheckCircle,
   ImageIcon,
   Sparkles,
@@ -30,6 +29,8 @@ import {
 } from 'lucide-react';
 import MDEditor from '@uiw/react-md-editor';
 import EditContestDetails, { type ContestFormData } from './EditContestDetails';
+import ErrorComponent from '../global/errors';
+import Forbidden from '../global/errors/Forbidden';
 
 const ManageContest = () => {
   const { contestId } = useParams<{ contestId: string }>();
@@ -40,6 +41,7 @@ const ManageContest = () => {
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [adminActionLoading, setAdminActionLoading] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [isForbidden, setIsForbidden] = useState(false);
   
   // Edit modal state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -71,7 +73,11 @@ const ManageContest = () => {
           setError('Failed to load contest data');
         }
       } catch (err: any) {
-        setError(err.message || 'Failed to fetch contest data');
+        if (err.status === 403) {
+          setIsForbidden(true);
+        } else {
+          setError(err.message || 'Failed to fetch contest data');
+        }
         console.error('Error fetching contest data:', err);
       } finally {
         setLoading(false);
@@ -124,14 +130,17 @@ const ManageContest = () => {
       }
       const result = await updateContest(Number(contestId), payload);
       
-      if (result) {
-        // Refresh contest data
-        const response = await getManageContestData(Number(contestId));
-        if (response && response.data) {
-          setData(response.data);
-        }
+      if (result && result.data) {
+        // Update local state with the updated contest
+        setData(prevData => {
+          if (!prevData) return prevData;
+          return {
+            ...prevData,
+            contest: result.data
+          };
+        });
         setIsEditModalOpen(false);
-        setSuccessMessage('Contest updated successfully!');
+        setSuccessMessage(result.message || 'Contest updated successfully!');
         setTimeout(() => setSuccessMessage(null), 3000);
       }
     } catch (error: any) {
@@ -198,7 +207,8 @@ const ManageContest = () => {
     try {
       const success = await deleteContest(Number(contestId));
       if (success) {
-        navigate('/contests');
+        setData(null);
+        navigate("/");
       }
     } catch (err: any) {
       alert(err.message || 'Failed to delete contest');
@@ -216,32 +226,38 @@ const ManageContest = () => {
     );
   }
 
+  if (isForbidden) {
+    return (
+      <Forbidden
+        title="403 - Forbidden"
+        message="You don't have permission to manage this contest."
+        backButtonText="Back to Contests"
+        backButtonPath="/contests"
+      />
+    );
+  }
+
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center bg-white/90 backdrop-blur-lg rounded-2xl border border-red-200/50 p-8 shadow-xl">
-          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <p className="text-xl text-red-600 font-semibold mb-2">Error</p>
-          <p className="text-gray-600 mb-4">{error}</p>
-          <button
-            onClick={() => navigate('/contests')}
-            className="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
-          >
-            Back to Contests
-          </button>
-        </div>
-      </div>
+      <ErrorComponent
+        type="404"
+        title="Contest Not Found"
+        message={error}
+        backButtonText="Back to Contests"
+        backButtonPath="/contests"
+      />
     );
   }
 
   if (!data) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center bg-white/90 backdrop-blur-lg rounded-2xl border border-gray-200/50 p-8 shadow-xl">
-          <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-          <p className="text-xl text-gray-700 font-semibold">No contest data found</p>
-        </div>
-      </div>
+      <ErrorComponent
+        type="404"
+        title="Contest Not Found"
+        message="No contest data available. This contest may have been deleted or doesn't exist."
+        backButtonText="Back to Contests"
+        backButtonPath="/contests"
+      />
     );
   }
 

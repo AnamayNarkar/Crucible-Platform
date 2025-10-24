@@ -106,10 +106,10 @@ export async function getContestById(contestId: number): Promise<Contest | null>
 export async function updateContest(
   contestId: number,
   contestData: UpdateContestPayload
-): Promise<Contest | null> {
+): Promise<{ message: string; data: Contest } | null> {
   try {
     const response = await axiosInstance.put(`/contests/${contestId}`, contestData);
-    return response.data as Contest;
+    return response.data;
   } catch (error: any) {
     const result = handleApiError(error, 'Failed to update contest');
     if (result && 'isServerDown' in result) {

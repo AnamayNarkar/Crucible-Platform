@@ -31,6 +31,15 @@ public class GlobalWebExceptionHandler {
     }
     
     /**
+     * Handles ForbiddenException (HTTP 403).
+     */
+    @ExceptionHandler(ForbiddenException.class)
+    public Mono<org.springframework.http.ResponseEntity<ResponseEntity<Void>>> handleForbidden(ForbiddenException ex) {
+        log.warn("Forbidden access: {}", ex.getMessage());
+        return createErrorResponse(ex.getMessage(), HttpStatus.FORBIDDEN);
+    }
+
+    /**
      * Handles specific InternalServerErrorException (HTTP 500).
      */
     @ExceptionHandler(InternalServerErrorException.class)

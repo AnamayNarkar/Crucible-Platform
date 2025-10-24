@@ -15,6 +15,7 @@ import ManageContest from './customComponents/home/ManageContest';
 
 import { useNavigate } from 'react-router-dom';
 import { setNavigator } from './services/navigationService';
+import NotFound from './customComponents/global/errors/NotFound';
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -43,8 +44,8 @@ function App() {
       <Route path="/contests/manage/:contestId" element={<ProtectedRoute element={<DashboardLayout children={<ManageContest />} />} />} />
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/server-down" element={<ServerDownPage />} />
+      <Route path="*" element={<DashboardLayout children={<NotFound />} />} />
     </Routes>
   );
 }
-
-export default App
+export default App;

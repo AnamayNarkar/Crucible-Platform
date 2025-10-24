@@ -8,12 +8,14 @@ import org.springframework.web.server.WebSession;
 import reactor.core.publisher.Mono;
 
 import com.crucible.platform.v1.dto.contest.CreateContest;
+import com.crucible.platform.v1.dto.contest.UpdateContest;
 import com.crucible.platform.v1.dto.contest.ManageContestResponse;
 import com.crucible.platform.v1.entity.Contest;
 import com.crucible.platform.v1.dto.ResponseEntity;
 import com.crucible.platform.v1.dto.user.UserSummaryDto;
 import com.crucible.platform.v1.entity.Question;
 import com.crucible.platform.v1.entity.ContestAdmin;
+import com.crucible.platform.v1.exceptions.ForbiddenException;
 import com.crucible.platform.v1.exceptions.NotFoundException;
 import com.crucible.platform.v1.exceptions.UnauthorizedAccessException;
 import com.crucible.platform.v1.repository.ContestAdminRepository;
@@ -64,7 +66,7 @@ public class ContestService {
               .anyMatch(admin -> admin.getAdminId().equals(userId));
 
           if (!isCreator && !isAdmin) {
-            return Mono.error(new UnauthorizedAccessException("User does not have permission to manage this contest"));
+            return Mono.error(new ForbiddenException("You do not have permission to manage this contest"));
           }
 
           // User is authorized, fetch questions and admin user details
@@ -117,6 +119,70 @@ public class ContestService {
     return contestRepository.findByStartTimeGreaterThanEqual(now)
         .collectList()
         .map(contests -> new ResponseEntity<>(contests, "Upcoming contests retrieved successfully"));
+  }
+
+  public Mono<ResponseEntity<Contest>> updateContest(Long contestId, Long userId, UpdateContest dto) {
+    // First, fetch the contest and verify authorization
+    Mono<Contest> contestMono = contestRepository.findById(contestId)
+        .switchIfEmpty(Mono.error(new NotFoundException("Contest not found with id: " + contestId)));
+
+    Mono<List<ContestAdmin>> adminsMono = contestAdminRepository.findByContestId(contestId)
+        .collectList();
+
+    return Mono.zip(contestMono, adminsMono)
+        .flatMap(tuple -> {
+          Contest contest = tuple.getT1();
+          List<ContestAdmin> contestAdmins = tuple.getT2();
+
+          // Check if user is the creator or an admin
+          boolean isCreator = contest.getCreatorId().equals(userId);
+          boolean isAdmin = contestAdmins.stream()
+              .anyMatch(admin -> admin.getAdminId().equals(userId));
+
+          if (!isCreator && !isAdmin) {
+            return Mono.error(new ForbiddenException("You do not have permission to update this contest"));
+          }
+
+          // Update fields - only creator can update name, banner, and time fields
+          if (dto.getCardDescription() != null) {
+            contest.setCardDescription(dto.getCardDescription());
+          }
+          if (dto.getMarkdownDescription() != null) {
+            contest.setMarkdownDescription(dto.getMarkdownDescription());
+          }
+          
+          // Only creator can update these fields
+          if (isCreator) {
+            if (dto.getName() != null) {
+              contest.setName(dto.getName());
+            }
+            if (dto.getBannerImageUrl() != null) {
+              contest.setBannerImageUrl(dto.getBannerImageUrl());
+            }
+            if (dto.getStartTime() != null) {
+              contest.setStartTime(dto.getStartTime());
+            }
+            if (dto.getEndTime() != null) {
+              contest.setEndTime(dto.getEndTime());
+            }
+          }
+
+          // Save the updated contest
+          return contestRepository.save(contest)
+              .map(updatedContest -> new ResponseEntity<>(updatedContest, "Contest updated successfully"));
+        });
+  }
+
+  public Mono<ResponseEntity<Void>> deleteContest(Long contestId, Long userId) {
+    return contestRepository.findById(contestId)
+        .switchIfEmpty(Mono.error(new NotFoundException("Contest not found with id: " + contestId)))
+        .flatMap(contest -> {
+          if (!contest.getCreatorId().equals(userId)) {
+            return Mono.error(new UnauthorizedAccessException("Only the creator can delete this contest"));
+          }
+          return contestRepository.delete(contest)
+              .then(Mono.just(new ResponseEntity<Void>(null, "Contest deleted successfully")));
+        });
   }
 
 }
