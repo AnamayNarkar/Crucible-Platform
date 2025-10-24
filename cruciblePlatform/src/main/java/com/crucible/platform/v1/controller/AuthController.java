@@ -14,6 +14,8 @@ import com.crucible.platform.v1.dto.auth.UserInfo;
 import com.crucible.platform.v1.dto.auth.UserRegistrationDTO;
 import com.crucible.platform.v1.dto.auth.UserRegistrationResponse;
 
+import java.util.Optional;
+
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
@@ -31,21 +33,18 @@ public class AuthController {
 
   @GetMapping("/verify-session")
   public Mono<ResponseEntity<String>> verifySession() {
-    return Mono.just(new ResponseEntity<>(200, "Hello bitch, your session is valid", "yay"));
+    return Mono.just(new ResponseEntity<>("Hello bitch, your session is valid", "yay"));
   }
 
   @GetMapping("/me")
-  public Mono<ResponseEntity<UserInfo>> getMe(WebSession session) {
+  public Mono<ResponseEntity<Optional<UserInfo>>> getMe(WebSession session) {
     Long id = (Long) session.getAttributes().get("userId");
     String username = (String) session.getAttributes().get("username");
     String email = (String) session.getAttributes().get("email");
     String[] roles = (String[]) session.getAttributes().get("roles");
 
-    if (id == null) {
-      return Mono.just(new ResponseEntity<>(401, null, "Not authenticated"));
-    }
-
     UserInfo userInfo = new UserInfo(id, username, email, roles);
-    return Mono.just(new ResponseEntity<>(200, userInfo, "User info retrieved"));
+    return Mono.just(new ResponseEntity<>(Optional.of(userInfo), "User info retrieved"));
   }
+
 }

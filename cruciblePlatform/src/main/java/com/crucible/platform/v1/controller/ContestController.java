@@ -1,12 +1,16 @@
 package com.crucible.platform.v1.controller;
 
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.WebSession;
 
 import com.crucible.platform.v1.dto.ResponseEntity;
 import com.crucible.platform.v1.dto.contest.CreateContest;
+import com.crucible.platform.v1.dto.contest.ManageContestResponse;
 import com.crucible.platform.v1.entity.Contest;
 import com.crucible.platform.v1.service.ContestService;
 
@@ -16,15 +20,21 @@ import reactor.core.publisher.Mono;
 @RequestMapping("/api/v1/contests")
 public class ContestController {
 
-    private final ContestService contestService;
+  private final ContestService contestService;
 
-    public ContestController(ContestService contestService) {
-        this.contestService = contestService;
-    }
-    
-    @PostMapping("/create")
-    public Mono<ResponseEntity<Contest>> createContest(WebSession session, CreateContest dto){
-        return contestService.createContest(session, dto);
-    }
+  public ContestController(ContestService contestService) {
+    this.contestService = contestService;
+  }
+
+  @PostMapping("")
+  public Mono<ResponseEntity<Contest>> createContest(WebSession session, @RequestBody CreateContest dto) {
+    return contestService.createContest(session, dto);
+  }
+
+  @GetMapping("/manage/{contestId}")
+  public Mono<ResponseEntity<ManageContestResponse>> getContestForManagement(WebSession session,@PathVariable Long contestId) {
+    Long userId = (Long) session.getAttributes().get("userId");
+    return contestService.getContestForManagement(contestId, userId);
+  }
 
 }

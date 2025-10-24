@@ -23,14 +23,12 @@ interface EditContestDetailsProps {
   formData: ContestFormData;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onMarkdownChange: (value: string | undefined) => void;
-  handleSubmit: (e: React.FormEvent) => void;
 }
 
 const EditContestDetails: React.FC<EditContestDetailsProps> = ({
   formData,
   handleInputChange,
-  onMarkdownChange,
-  handleSubmit
+  onMarkdownChange
 }) => {
   const [startDate, setStartDate] = useState(formData.startTime ? formData.startTime.split('T')[0] : '');
   const [startTime, setStartTime] = useState(formData.startTime ? (formData.startTime.split('T')[1] || '00:00') : '00:00');
@@ -56,8 +54,8 @@ const EditContestDetails: React.FC<EditContestDetailsProps> = ({
           <span>Contest Details</span>
         </h2>
 
-        {/* The form now uses the handleSubmit prop */}
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {/* The form content without form wrapper - submit is handled by parent */}
+        <div className="space-y-6">
           {/* Contest Name */}
           <div className="space-y-2">
             <label className="block text-sm font-semibold text-gray-700">
@@ -183,7 +181,7 @@ const EditContestDetails: React.FC<EditContestDetailsProps> = ({
               </div>
             </div>
           </div>
-        </form>
+        </div>
       </div>
 
       {/* Markdown Editor */}

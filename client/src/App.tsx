@@ -11,6 +11,7 @@ import Problems from './customComponents/home/Problems';
 import Leaderboard from './customComponents/home/Leaderboard';
 import CreateContest from './customComponents/home/CreateContest';
 import ProtectedRoute from './utils/ProtectedRoute';
+import ManageContest from './customComponents/home/ManageContest';
 
 import { useNavigate } from 'react-router-dom';
 import { setNavigator } from './services/navigationService';
@@ -39,6 +40,7 @@ function App() {
       <Route path="/problems" element={<DashboardLayout children={<Problems />} />} />
       <Route path="/leaderboard" element={<DashboardLayout children={<Leaderboard />} />} />
       <Route path="/contests/create" element={<ProtectedRoute element={<DashboardLayout children={<CreateContest />} />} />} />
+      <Route path="/contests/manage/:contestId" element={<ProtectedRoute element={<DashboardLayout children={<ManageContest />} />} />} />
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/server-down" element={<ServerDownPage />} />
     </Routes>

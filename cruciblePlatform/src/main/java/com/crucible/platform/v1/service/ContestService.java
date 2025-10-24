@@ -8,46 +8,115 @@ import org.springframework.web.server.WebSession;
 import reactor.core.publisher.Mono;
 
 import com.crucible.platform.v1.dto.contest.CreateContest;
+import com.crucible.platform.v1.dto.contest.ManageContestResponse;
 import com.crucible.platform.v1.entity.Contest;
 import com.crucible.platform.v1.dto.ResponseEntity;
+import com.crucible.platform.v1.dto.user.UserSummaryDto;
+import com.crucible.platform.v1.entity.Question;
+import com.crucible.platform.v1.entity.ContestAdmin;
+import com.crucible.platform.v1.exceptions.NotFoundException;
+import com.crucible.platform.v1.exceptions.UnauthorizedAccessException;
+import com.crucible.platform.v1.repository.ContestAdminRepository;
+import com.crucible.platform.v1.repository.ContestQuestionRepository;
 import com.crucible.platform.v1.repository.ContestRepository;
+import com.crucible.platform.v1.repository.QuestionRepository;
+import com.crucible.platform.v1.repository.UserRepository;
 
 @Service
 public class ContestService {
-    private final ContestRepository contestRepository;
+  private final ContestRepository contestRepository;
+  private final ContestAdminRepository contestAdminRepository;
+  private final ContestQuestionRepository contestQuestionRepository;
+  private final QuestionRepository questionRepository;
+  private final UserRepository userRepository;
 
-    public ContestService(ContestRepository contestRepository) {
-        this.contestRepository = contestRepository;
-    }
+  public ContestService(ContestRepository contestRepository, ContestQuestionRepository contestQuestionRepository,
+      ContestAdminRepository contestAdminRepository, QuestionRepository questionRepository,
+      UserRepository userRepository) {
+    this.contestQuestionRepository = contestQuestionRepository;
+    this.contestAdminRepository = contestAdminRepository;
+    this.contestRepository = contestRepository;
+    this.questionRepository = questionRepository;
+    this.userRepository = userRepository;
+  }
 
-    public Mono<ResponseEntity<Contest>> getContestById(Long contestId) {
-        return contestRepository.findById(contestId)
-                .map(contest -> new ResponseEntity<>(200, contest, "Contest retrieved successfully"))
-                .defaultIfEmpty(new ResponseEntity<>(404, null, "Contest not found"));
-    }
+  public Mono<ResponseEntity<ManageContestResponse>> getContestForManagement(Long contestId, Long userId) {
+    // Fetch contest and contest admins in parallel
+    Mono<Contest> contestMono = contestRepository.findById(contestId)
+        .switchIfEmpty(Mono.error(new NotFoundException("Contest not found with id: " + contestId)));
 
-    public Mono<ResponseEntity<Contest>> createContest(WebSession session, CreateContest dto){
-        Long userId = (Long) session.getAttributes().get("userId");
-        if (userId == null) {
-            return Mono.just(new ResponseEntity<>(401, null, "User not authenticated"));
-        }
-        Contest contest = new Contest(null, dto.getName(), dto.getBannerImageUrl(), dto.getCardDescription(),dto.getMarkdownDescription(), userId, dto.getStartTime(), dto.getEndTime(), null, null);
-        return contestRepository.save(contest)
-                .map(savedContest -> new ResponseEntity<>(201, savedContest, "Contest created successfully"));
-    }
+    Mono<List<ContestAdmin>> adminsMono = contestAdminRepository.findByContestId(contestId)
+        .collectList();
 
-    public Mono<ResponseEntity<List<Contest>>> getOngoingContests() {
-        LocalDateTime now = LocalDateTime.now();
-        return contestRepository.findByStartTimeLessThanEqualAndEndTimeGreaterThanEqual(now, now)
-                .collectList()
-                .map(contests -> new ResponseEntity<>(200, contests, "Ongoing contests retrieved successfully"));
-    }
+    // Combine both results and check authorization
+    return Mono.zip(contestMono, adminsMono)
+        .flatMap(tuple -> {
+          if (tuple.getT1() == null) {
+            return Mono.error(new NotFoundException("Contest not found with id: " + contestId));
+          }
 
-    public Mono<ResponseEntity<List<Contest>>> getUpcomingContests() {
-        LocalDateTime now = LocalDateTime.now();
-        return contestRepository.findByStartTimeGreaterThanEqual(now)
-                .collectList()
-                .map(contests -> new ResponseEntity<>(200, contests, "Upcoming contests retrieved successfully"));
-    }
+          Contest contest = tuple.getT1();
+          List<ContestAdmin> contestAdmins = tuple.getT2();
+
+          // Check if user is the creator or an admin
+          boolean isCreator = contest.getCreatorId().equals(userId);
+          boolean isAdmin = contestAdmins.stream()
+              .anyMatch(admin -> admin.getAdminId().equals(userId));
+
+          if (!isCreator && !isAdmin) {
+            return Mono.error(new UnauthorizedAccessException("User does not have permission to manage this contest"));
+          }
+
+          // User is authorized, fetch questions and admin user details
+          Mono<List<Question>> questionsMono = contestQuestionRepository.findByContestId(contestId)
+              .flatMap(cq -> questionRepository.findById(cq.getQuestionId()))
+              .collectList();
+
+          Mono<List<UserSummaryDto>> adminUsersMono = Mono.just(contestAdmins)
+              .flatMapMany(admins -> reactor.core.publisher.Flux.fromIterable(admins))
+              .flatMap(admin -> userRepository.findById(admin.getAdminId()))
+              .map(user -> new UserSummaryDto(
+                  user.getId().toString(),
+                  user.getUsername(),
+                  user.getEmail()))
+              .collectList();
+
+          // Combine questions and admin users
+          return Mono.zip(questionsMono, adminUsersMono)
+              .map(data -> {
+                List<Question> questions = data.getT1();
+                List<UserSummaryDto> adminUsers = data.getT2();
+
+                ManageContestResponse response = new ManageContestResponse();
+                response.setContest(contest);
+                response.setAdmins(adminUsers.toArray(new UserSummaryDto[0]));
+                response.setQuestions(questions.toArray(new Question[0]));
+
+                return new ResponseEntity<>(response, "Contest management data retrieved successfully");
+              });
+        });
+  }
+
+  public Mono<ResponseEntity<Contest>> createContest(WebSession session, CreateContest dto) {
+    Long userId = (Long) session.getAttributes().get("userId");
+    Contest contest = new Contest(null, dto.getName(), dto.getBannerImageUrl(), dto.getCardDescription(),
+        dto.getMarkdownDescription(), userId, dto.getStartTime(), dto.getEndTime(), null, null);
+    return contestRepository.save(contest)
+        .map(savedContest -> new ResponseEntity<>(savedContest, "Contest created successfully"));
+  }
+
+  public Mono<ResponseEntity<List<Contest>>> getOngoingContests() {
+    LocalDateTime now = LocalDateTime.now();
+    return contestRepository.findByStartTimeLessThanEqualAndEndTimeGreaterThanEqual(now, now)
+        .collectList()
+        .map(contests -> new ResponseEntity<>(contests, "Ongoing contests retrieved successfully"));
+  }
+
+  public Mono<ResponseEntity<List<Contest>>> getUpcomingContests() {
+    LocalDateTime now = LocalDateTime.now();
+    return contestRepository.findByStartTimeGreaterThanEqual(now)
+        .collectList()
+        .map(contests -> new ResponseEntity<>(contests, "Upcoming contests retrieved successfully"));
+  }
 
 }

@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 
 public interface ContestRepository extends ReactiveCrudRepository<Contest, Long> {
     Mono<Contest> findById(Long id);
+    Mono<Contest> save(Contest contest);
+
     Flux<Contest> findByStartTimeLessThanEqualAndEndTimeGreaterThanEqual(LocalDateTime start, LocalDateTime end);
     Flux<Contest> findByStartTimeGreaterThanEqual(LocalDateTime start);
 }

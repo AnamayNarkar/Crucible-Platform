@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import type { AppDispatch } from '../../services/state/store';
 import MDEditor from '@uiw/react-md-editor';
 import { 
   Calendar, 
@@ -8,14 +10,18 @@ import {
   Sparkles,
   Eye,
   Save,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 // Import the new component and the shared type
 import EditContestDetails, { type ContestFormData } from './EditContestDetails';
+import { createContest } from '../../services/state/slice/contests';
 
 const CreateContest = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<ContestFormData>({
     name: '',
     bannerImageUrl: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?w=800',
@@ -37,10 +43,59 @@ const CreateContest = () => {
   };
 
   // This handler is passed to the child component
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Contest Data:', formData);
-    // Handle submission logic here
+    
+    // Validate required fields
+    if (!formData.name.trim()) {
+      alert('Please enter a contest name');
+      return;
+    }
+    if (!formData.cardDescription.trim()) {
+      alert('Please enter a card description');
+      return;
+    }
+    if (!formData.startTime) {
+      alert('Please select a start time');
+      return;
+    }
+    if (!formData.endTime) {
+      alert('Please select an end time');
+      return;
+    }
+    
+    // Validate start time is before end time
+    if (new Date(formData.startTime) >= new Date(formData.endTime)) {
+      alert('End time must be after start time');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Dispatch the Redux thunk to create the contest
+      const result = await dispatch(createContest({
+        name: formData.name,
+        bannerImageUrl: formData.bannerImageUrl,
+        cardDescription: formData.cardDescription,
+        markdownDescription: formData.markdownDescription,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+      })).unwrap();
+      console.log('Contest created successfully nigga:', result);
+      
+      if (result && result.data.id) {
+        // Navigate to the manage contest page with the contest id
+        navigate(`/contests/manage/${result.data.id}`);
+      } else {
+        alert('Failed to create contest. Please try again.');
+      }
+    } catch (error: any) {
+      console.error('Error creating contest:', error);
+      alert(error?.message || 'Failed to create contest. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -65,10 +120,20 @@ const CreateContest = () => {
           </div>
           <button
             onClick={handleSubmit} // This button can also trigger submit
-            className="inline-flex items-center space-x-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold shadow-lg shadow-blue-500/40 transform hover:scale-105 transition-all cursor-pointer"
+            disabled={isSubmitting}
+            className="inline-flex items-center space-x-2 px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold shadow-lg shadow-blue-500/40 transform hover:scale-105 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
           >
-            <Save className="w-5 h-5" />
-            <span>Publish Contest</span>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span>Publishing...</span>
+              </>
+            ) : (
+              <>
+                <Save className="w-5 h-5" />
+                <span>Publish Contest</span>
+              </>
+            )}
           </button>
         </div>
 
@@ -76,12 +141,13 @@ const CreateContest = () => {
         <div className="grid lg:grid-cols-2 gap-8">
           
           {/* Left Side - Form (Now the new component) */}
-          <EditContestDetails
-            formData={formData}
-            handleInputChange={handleInputChange}
-            onMarkdownChange={handleMarkdownChange}
-            handleSubmit={handleSubmit}
-          />
+          <form onSubmit={handleSubmit}>
+            <EditContestDetails
+              formData={formData}
+              handleInputChange={handleInputChange}
+              onMarkdownChange={handleMarkdownChange}
+            />
+          </form>
 
           {/* Right Side - Live Preview (Stays here) */}
           <div className="lg:sticky lg:top-8 h-fit">

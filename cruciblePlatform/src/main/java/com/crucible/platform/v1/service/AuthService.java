@@ -22,7 +22,7 @@ public class AuthService {
 
     public Mono<ResponseEntity<UserRegistrationResponse>> register(UserRegistrationDTO body) {
         return userRepository.findByUsername(body.getUsername())
-                .flatMap(existingUser -> Mono.just(new ResponseEntity<UserRegistrationResponse>(409, null, "User already exists")))
+                .flatMap(existingUser -> Mono.just(new ResponseEntity<UserRegistrationResponse>(null, "User already exists")))
                 .switchIfEmpty(Mono.defer(() -> {
                     String hashedPassword = passwordEncoder.encode(body.getPassword());
 
@@ -41,7 +41,7 @@ public class AuthService {
                                         savedUser.getEmail(),
                                         savedUser.getRoles()
                                 );
-                                return new ResponseEntity<>(1, response, "Registration successful");
+                                return new ResponseEntity<>(response, "Registration successful");
                             });
                 }));
     }
