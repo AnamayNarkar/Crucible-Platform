@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { InteractiveGridPattern } from '../../customComponents/auth/InteractiveGridPattern';
 import { cn } from '@/lib/utils';
 import { 
-  Trophy, 
   Bell, 
   Settings, 
   LogOut,
@@ -42,14 +41,14 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
       </div>
 
       {/* Header */}
-      <header className="z-10 backdrop-blur-xl bg-white/70 border-b border-gray-200/50 shadow-sm">
+      <header className="z-50 backdrop-blur-xl bg-white/70 border-b border-gray-200/50 shadow-sm sticky top-0">
         <div className="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo and Brand */}
             <div className="flex items-center space-x-8">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
-                  <Trophy className="w-6 h-6 text-white" />
+                <div className="w-10 h-10 bg-gradient-to-br rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/30">
+                  <img src="/crucible-logo.svg" alt="Crucible Logo" className="w-6 h-6" />
                 </div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 bg-clip-text text-transparent">
                   Crucible
@@ -89,7 +88,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
                 {/* Notifications Dropdown */}
                 {showNotifications && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white/95 backdrop-blur-xl rounded-xl shadow-2xl border border-gray-200/50 overflow-hidden">
+                  <div className="absolute right-0 mt-2 w-80 bg-white/95 backdrop-blur-xl rounded-xl shadow-2xl border border-gray-200/50 overflow-hidden z-50">
                     <div className="p-4 border-b border-gray-200/50">
                       <h3 className="font-semibold text-gray-900">Notifications</h3>
                       <p className="text-xs text-gray-500 mt-1">{unreadCount} unread</p>
@@ -135,7 +134,7 @@ const DashboardLayout = ({ children }: { children: React.ReactNode }) => {
 
                   {/* Profile Dropdown */}
                   {showProfileMenu && (
-                    <div className="absolute right-0 mt-2 w-56 bg-white/95 backdrop-blur-xl rounded-xl shadow-2xl border border-gray-200/50 overflow-hidden">
+                    <div className="absolute right-0 mt-2 w-56 bg-white/95 backdrop-blur-xl rounded-xl shadow-2xl border border-gray-200/50 overflow-hidden z-50">
                       <div className="p-4 border-b border-gray-200/50">
                         <p className="font-semibold text-gray-900">{user?.username || 'User'}</p>
                         <p className="text-xs text-gray-500 mt-1">{user?.email || 'user@example.com'}</p>

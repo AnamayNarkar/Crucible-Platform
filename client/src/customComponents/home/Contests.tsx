@@ -100,7 +100,7 @@ const ContestCard = ({ contest, type = 'default' }: { contest: Contest; type?: '
             <Users className="w-4 h-4 text-gray-400" />
             <span>Contest #{contest.id}</span>
           </div>
-          <button className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-sm font-medium rounded-lg shadow-lg shadow-blue-500/30 transform group-hover:scale-105 transition-all">
+          <button className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-sm font-medium rounded-lg shadow-lg shadow-blue-500/30 transform group-hover:scale-105 transition-all cursor-pointer">
             {type === 'user' ? 'Manage' : 'View Details'}
           </button>
         </div>
@@ -128,7 +128,7 @@ const TabButton = ({
   <button
     onClick={onClick}
     className={cn(
-      'flex items-center space-x-3 px-6 py-3.5 rounded-xl font-semibold transition-all duration-300',
+      'flex items-center space-x-3 px-6 py-3.5 rounded-xl font-semibold transition-all duration-300 cursor-pointer',
       active
         ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-xl shadow-blue-500/30 -translate-y-1'
         : 'bg-white/80 text-gray-700 hover:bg-white border border-gray-200/50 shadow-md shadow-gray-200/50 hover:shadow-lg hover:-translate-y-0.5'
@@ -314,7 +314,7 @@ const Contests = () => {
                 title="No Contests Yet"
                 message="Create your first contest and start challenging others!"
               >
-                <button className="inline-flex items-center space-x-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium shadow-lg shadow-blue-500/30 transform hover:scale-105 transition-all" onClick={() => navigate('/contests/create')}>
+                <button className="inline-flex items-center space-x-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium shadow-lg shadow-blue-500/30 transform hover:scale-105 transition-all cursor-pointer" onClick={() => navigate('/contests/create')}>
                   <Plus className="w-5 h-5" />
                   <span>Create Your First Contest</span>
                 </button>

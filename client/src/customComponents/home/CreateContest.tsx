@@ -106,7 +106,7 @@ const CreateContest = () => {
           <div className="flex items-center space-x-4">
             <button
               onClick={() => navigate('/contests')}
-              className="p-2.5 rounded-xl bg-white/80 hover:bg-white border border-gray-200/50 text-gray-700 hover:text-gray-900 transition-all shadow-md hover:shadow-lg"
+              className="p-2.5 rounded-xl bg-white/80 hover:bg-white border border-gray-200/50 text-gray-700 hover:text-gray-900 transition-all shadow-md hover:shadow-lg cursor-pointer"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
@@ -146,6 +146,7 @@ const CreateContest = () => {
               formData={formData}
               handleInputChange={handleInputChange}
               onMarkdownChange={handleMarkdownChange}
+              isCreator={true}
             />
           </form>
 
@@ -224,7 +225,7 @@ const CreateContest = () => {
 
                     <div className="flex items-center justify-between pt-4 border-t border-gray-200/50">
                       <div className="text-sm text-gray-500">Preview</div>
-                      <button className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-medium rounded-lg shadow-lg shadow-blue-500/30">
+                      <button className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-medium rounded-lg shadow-lg shadow-blue-500/30 cursor-pointer">
                         View Details
                       </button>
                     </div>

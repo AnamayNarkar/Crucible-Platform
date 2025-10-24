@@ -277,7 +277,7 @@ const ManageContest = () => {
               </h2>
               <button
                 onClick={() => setIsEditModalOpen(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5 text-gray-500" />
               </button>
@@ -297,14 +297,14 @@ const ManageContest = () => {
             <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-end space-x-3">
               <button
                 onClick={() => setIsEditModalOpen(false)}
-                className="px-5 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-medium transition-all"
+                className="px-5 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-medium transition-all cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={handleUpdateContest}
                 disabled={isSubmitting}
-                className="inline-flex items-center space-x-2 px-6 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-medium shadow-lg shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex items-center space-x-2 px-6 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-medium shadow-lg shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isSubmitting ? (
                   <>
@@ -335,7 +335,7 @@ const ManageContest = () => {
               </h2>
               <button
                 onClick={() => setIsQuestionsModalOpen(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5 text-gray-500" />
               </button>
@@ -345,7 +345,7 @@ const ManageContest = () => {
             <div className="flex-1 overflow-y-auto p-6">
               <div className="mb-4 flex items-center justify-between">
                 <p className="text-gray-600">Manage your contest questions here</p>
-                <button className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm">
+                <button className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm cursor-pointer">
                   <span>Add Question</span>
                 </button>
               </div>
@@ -372,10 +372,10 @@ const ManageContest = () => {
                           </div>
                         </div>
                         <div className="flex items-center space-x-2 flex-shrink-0">
-                          <button className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="Edit question">
+                          <button className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer" title="Edit question">
                             <Edit className="w-4 h-4" />
                           </button>
-                          <button className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete question">
+                          <button className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer" title="Delete question">
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
@@ -387,7 +387,7 @@ const ManageContest = () => {
                 <div className="text-center py-16">
                   <FileQuestion className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-500 mb-4">No questions added yet</p>
-                  <button className="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors shadow-sm">
+                  <button className="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors shadow-sm cursor-pointer">
                     Add Your First Question
                   </button>
                 </div>
@@ -398,7 +398,7 @@ const ManageContest = () => {
             <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-end">
               <button
                 onClick={() => setIsQuestionsModalOpen(false)}
-                className="px-5 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-medium transition-all"
+                className="px-5 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-medium transition-all cursor-pointer"
               >
                 Close
               </button>
@@ -456,7 +456,7 @@ const ManageContest = () => {
                   </h2>
                   <button
                     onClick={handleEditContest}
-                    className="inline-flex items-center space-x-2 px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium transition-all shadow-sm"
+                    className="inline-flex items-center space-x-2 px-4 py-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium transition-all shadow-sm cursor-pointer"
                   >
                     <Edit className="w-4 h-4" />
                     <span>Edit</span>
@@ -578,7 +578,7 @@ const ManageContest = () => {
                         <button
                           type="submit"
                           disabled={adminActionLoading === 'adding'}
-                          className="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                          className="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm cursor-pointer"
                         >
                           {adminActionLoading === 'adding' ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -612,7 +612,7 @@ const ManageContest = () => {
                               <button
                                 onClick={() => handleRemoveAdmin(admin.id, admin.email)}
                                 disabled={adminActionLoading === admin.id}
-                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0 cursor-pointer"
                                 title="Remove admin"
                               >
                                 {adminActionLoading === admin.id ? (
@@ -644,7 +644,7 @@ const ManageContest = () => {
                   </h2>
                   <button 
                     onClick={() => setIsQuestionsModalOpen(true)}
-                    className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+                    className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm cursor-pointer"
                   >
                     <span>Edit</span>
                     <Edit className="w-4 h-4" />
@@ -670,7 +670,7 @@ const ManageContest = () => {
                               </div>
                             </div>
                             <button 
-                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0"
+                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
                               title="Delete question"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -683,7 +683,7 @@ const ManageContest = () => {
                     <div className="text-center py-12">
                       <FileQuestion className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                       <p className="text-gray-500 mb-4">No questions added yet</p>
-                      <button className="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors shadow-sm">
+                      <button className="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors shadow-sm cursor-pointer">
                         Add Your First Question
                       </button>
                     </div>
