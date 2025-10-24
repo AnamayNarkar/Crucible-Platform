@@ -19,10 +19,11 @@ public class Question {
     @Id
     private Long id;
 
-    private Long creatorId;
     private String title;
     private String markdownDescription;
     private Integer points;
+    private Long creatorId;
+    private Long contestId;
 
     @CreatedDate
     private LocalDateTime createdAt;

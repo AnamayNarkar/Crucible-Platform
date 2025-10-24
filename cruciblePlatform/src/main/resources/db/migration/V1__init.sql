@@ -28,6 +28,7 @@ CREATE TABLE questions (
     title VARCHAR(255) NOT NULL,
     markdown_description TEXT,
     creator_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    contest_id BIGINT REFERENCES contests(id) ON DELETE CASCADE,
     points INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -70,13 +71,6 @@ CREATE TABLE user_contests (
     rank INT DEFAULT NULL
 );
 
--- contest_questions
-CREATE TABLE contest_questions (
-    contest_id BIGINT REFERENCES contests(id),
-    question_id BIGINT REFERENCES questions(id),
-    PRIMARY KEY (contest_id, question_id)
-);
-
 -- contest_admins
 CREATE TABLE contest_admins (
     contest_id BIGINT REFERENCES contests(id),
@@ -92,8 +86,6 @@ CREATE INDEX idx_test_cases_question_id ON test_cases(question_id);
 CREATE INDEX idx_contests_creator_id ON contests(creator_id);
 CREATE INDEX idx_user_contests_user_id ON user_contests(user_id);
 CREATE INDEX idx_user_contests_contest_id ON user_contests(contest_id);
-CREATE INDEX idx_contest_questions_contest_id ON contest_questions(contest_id);
-CREATE INDEX idx_contest_questions_question_id ON contest_questions(question_id);
 CREATE INDEX idx_contest_admins_contest_id ON contest_admins(contest_id);
 CREATE INDEX idx_contest_admins_admin_id ON contest_admins(admin_id);
 

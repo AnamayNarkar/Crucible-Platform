@@ -1,11 +1,9 @@
 package com.crucible.platform.v1.service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.WebSession;
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 
 import com.crucible.platform.v1.dto.contest.CreateContest;
 import com.crucible.platform.v1.dto.contest.UpdateContest;
@@ -19,23 +17,23 @@ import com.crucible.platform.v1.exceptions.ForbiddenException;
 import com.crucible.platform.v1.exceptions.NotFoundException;
 import com.crucible.platform.v1.exceptions.UnauthorizedAccessException;
 import com.crucible.platform.v1.repository.ContestAdminRepository;
-import com.crucible.platform.v1.repository.ContestQuestionRepository;
 import com.crucible.platform.v1.repository.ContestRepository;
 import com.crucible.platform.v1.repository.QuestionRepository;
 import com.crucible.platform.v1.repository.UserRepository;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 public class ContestService {
   private final ContestRepository contestRepository;
   private final ContestAdminRepository contestAdminRepository;
-  private final ContestQuestionRepository contestQuestionRepository;
   private final QuestionRepository questionRepository;
   private final UserRepository userRepository;
 
-  public ContestService(ContestRepository contestRepository, ContestQuestionRepository contestQuestionRepository,
+  public ContestService(ContestRepository contestRepository,
       ContestAdminRepository contestAdminRepository, QuestionRepository questionRepository,
       UserRepository userRepository) {
-    this.contestQuestionRepository = contestQuestionRepository;
     this.contestAdminRepository = contestAdminRepository;
     this.contestRepository = contestRepository;
     this.questionRepository = questionRepository;
@@ -70,12 +68,12 @@ public class ContestService {
           }
 
           // User is authorized, fetch questions and admin user details
-          Mono<List<Question>> questionsMono = contestQuestionRepository.findByContestId(contestId)
-              .flatMap(cq -> questionRepository.findById(cq.getQuestionId()))
+          
+          // FIX: Use questionRepository.findByContestId directly
+          Mono<List<Question>> questionsMono = questionRepository.findByContestId(contestId)
               .collectList();
 
-          Mono<List<UserSummaryDto>> adminUsersMono = Mono.just(contestAdmins)
-              .flatMapMany(admins -> reactor.core.publisher.Flux.fromIterable(admins))
+          Mono<List<UserSummaryDto>> adminUsersMono = Flux.fromIterable(contestAdmins)
               .flatMap(admin -> userRepository.findById(admin.getAdminId()))
               .map(user -> new UserSummaryDto(
                   user.getId().toString(),
@@ -101,8 +99,20 @@ public class ContestService {
 
   public Mono<ResponseEntity<Contest>> createContest(WebSession session, CreateContest dto) {
     Long userId = (Long) session.getAttributes().get("userId");
-    Contest contest = new Contest(null, dto.getName(), dto.getBannerImageUrl(), dto.getCardDescription(),
-        dto.getMarkdownDescription(), userId, dto.getStartTime(), dto.getEndTime(), null, null);
+    // This constructor assumes your Contest entity matches the migration
+    // (including banner_image_url and card_description)
+    Contest contest = new Contest(
+        null, 
+        dto.getName(), 
+        dto.getBannerImageUrl(), 
+        dto.getCardDescription(),
+        dto.getMarkdownDescription(), 
+        userId, 
+        dto.getStartTime(), 
+        dto.getEndTime(), 
+        null, 
+        null
+    );
     return contestRepository.save(contest)
         .map(savedContest -> new ResponseEntity<>(savedContest, "Contest created successfully"));
   }
@@ -143,7 +153,7 @@ public class ContestService {
             return Mono.error(new ForbiddenException("You do not have permission to update this contest"));
           }
 
-          // Update fields - only creator can update name, banner, and time fields
+          // Update fields
           if (dto.getCardDescription() != null) {
             contest.setCardDescription(dto.getCardDescription());
           }
@@ -184,5 +194,4 @@ public class ContestService {
               .then(Mono.just(new ResponseEntity<Void>(null, "Contest deleted successfully")));
         });
   }
-
 }

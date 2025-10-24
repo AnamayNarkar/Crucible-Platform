@@ -10,4 +10,5 @@ public interface QuestionRepository extends ReactiveCrudRepository<Question, Lon
     Mono<Question> findById(Long id);
     Flux<Question> findByCreatorId(Long creatorId);
     Flux<Question> findByTitleContainingIgnoreCase(String title);
+    Flux<Question> findByContestId(Long contestId);
 }
