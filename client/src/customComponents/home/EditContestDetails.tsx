@@ -23,12 +23,14 @@ interface EditContestDetailsProps {
   formData: ContestFormData;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onMarkdownChange: (value: string | undefined) => void;
+  isCreator: boolean;
 }
 
 const EditContestDetails: React.FC<EditContestDetailsProps> = ({
   formData,
   handleInputChange,
-  onMarkdownChange
+  onMarkdownChange,
+  isCreator
 }) => {
   const [startDate, setStartDate] = useState(formData.startTime ? formData.startTime.split('T')[0] : '');
   const [startTime, setStartTime] = useState(formData.startTime ? (formData.startTime.split('T')[1] || '00:00') : '00:00');
@@ -69,6 +71,7 @@ const EditContestDetails: React.FC<EditContestDetailsProps> = ({
               placeholder="Enter an exciting contest name"
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all bg-white/50 placeholder:text-gray-400"
               required
+              disabled={!isCreator}
             />
           </div>
 
@@ -87,6 +90,7 @@ const EditContestDetails: React.FC<EditContestDetailsProps> = ({
                 placeholder="https://example.com/banner.jpg"
                 className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all bg-white/50 placeholder:text-gray-400"
                 required
+                disabled={!isCreator}
               />
             </div>
           </div>
@@ -129,6 +133,7 @@ const EditContestDetails: React.FC<EditContestDetailsProps> = ({
                     }}
                     className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all bg-white/50"
                     required
+                    disabled={!isCreator}
                   />
                 </div>
                 <div className="relative flex-1">
@@ -142,6 +147,7 @@ const EditContestDetails: React.FC<EditContestDetailsProps> = ({
                     }}
                     className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all bg-white/50"
                     required
+                    disabled={!isCreator}
                   />
                 </div>
               </div>
@@ -163,6 +169,7 @@ const EditContestDetails: React.FC<EditContestDetailsProps> = ({
                     }}
                     className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all bg-white/50"
                     required
+                    disabled={!isCreator}
                   />
                 </div>
                 <div className="relative flex-1">
@@ -176,6 +183,7 @@ const EditContestDetails: React.FC<EditContestDetailsProps> = ({
                     }}
                     className="w-full pl-11 pr-4 py-3 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all bg-white/50"
                     required
+                    disabled={!isCreator}
                   />
                 </div>
               </div>

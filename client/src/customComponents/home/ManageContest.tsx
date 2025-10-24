@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import { 
   getManageContestData, 
   addAdminToContest, 
@@ -52,6 +53,9 @@ const ManageContest = () => {
     startTime: '',
     endTime: '',
   });
+
+  const user = useSelector((state: any) => state.auth.user);
+  const isCreator = user && data ? user.id === data.contest.creatorId : false;
 
   useEffect(() => {
     const fetchContestData = async () => {
@@ -108,14 +112,17 @@ const ManageContest = () => {
     setIsSubmitting(true);
     
     try {
-      const result = await updateContest(Number(contestId), {
-        name: editFormData.name,
-        bannerImageUrl: editFormData.bannerImageUrl,
+      const payload: any = {
         cardDescription: editFormData.cardDescription,
         markdownDescription: editFormData.markdownDescription,
-        startTime: editFormData.startTime,
-        endTime: editFormData.endTime,
-      });
+      };
+      if (isCreator) {
+        payload.name = editFormData.name;
+        payload.bannerImageUrl = editFormData.bannerImageUrl;
+        payload.startTime = editFormData.startTime;
+        payload.endTime = editFormData.endTime;
+      }
+      const result = await updateContest(Number(contestId), payload);
       
       if (result) {
         // Refresh contest data
@@ -266,6 +273,7 @@ const ManageContest = () => {
                 formData={editFormData}
                 handleInputChange={handleInputChange}
                 onMarkdownChange={handleMarkdownChange}
+                isCreator={isCreator}
               />
             </div>
 
@@ -402,13 +410,15 @@ const ManageContest = () => {
                 <p className="text-gray-600 mt-1">Configure and manage your contest</p>
               </div>
             </div>
-            <button
-              onClick={handleDeleteContest}
-              className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-medium shadow-lg shadow-red-500/20 transition-all cursor-pointer"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span>Delete Contest</span>
-            </button>
+            {isCreator && (
+              <button
+                onClick={handleDeleteContest}
+                className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl bg-red-500 hover:bg-red-600 text-white font-medium shadow-lg shadow-red-500/20 transition-all cursor-pointer"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Delete Contest</span>
+              </button>
+            )}
           </div>
 
           {/* Success Message */}
@@ -532,35 +542,37 @@ const ManageContest = () => {
 
                 <div className="p-6">
                   {/* Add Admin Form */}
-                  <form onSubmit={handleAddAdmin} className="mb-4">
-                    <label className="text-sm font-semibold text-gray-700 mb-2 block">
-                      Add Admin by Email
-                    </label>
-                    <div className="flex space-x-2">
-                      <div className="relative flex-1">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
-                          type="email"
-                          value={newAdminEmail}
-                          onChange={(e) => setNewAdminEmail(e.target.value)}
-                          placeholder="admin@example.com"
-                          className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm"
-                          required
-                        />
+                  {isCreator && (
+                    <form onSubmit={handleAddAdmin} className="mb-4">
+                      <label className="text-sm font-semibold text-gray-700 mb-2 block">
+                        Add Admin by Email
+                      </label>
+                      <div className="flex space-x-2">
+                        <div className="relative flex-1">
+                          <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <input
+                            type="email"
+                            value={newAdminEmail}
+                            onChange={(e) => setNewAdminEmail(e.target.value)}
+                            placeholder="admin@example.com"
+                            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-sm"
+                            required
+                          />
+                        </div>
+                        <button
+                          type="submit"
+                          disabled={adminActionLoading === 'adding'}
+                          className="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
+                        >
+                          {adminActionLoading === 'adding' ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <UserPlus className="w-4 h-4" />
+                          )}
+                        </button>
                       </div>
-                      <button
-                        type="submit"
-                        disabled={adminActionLoading === 'adding'}
-                        className="px-4 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
-                      >
-                        {adminActionLoading === 'adding' ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <UserPlus className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-                  </form>
+                    </form>
+                  )}
 
                   {/* Admin List - Fixed height with scroll */}
                   <div className="max-h-[240px] overflow-y-auto space-y-3 pr-2">
@@ -580,18 +592,20 @@ const ManageContest = () => {
                                 <p className="text-xs text-gray-600 truncate">{admin.email}</p>
                               </div>
                             </div>
-                            <button
-                              onClick={() => handleRemoveAdmin(admin.id, admin.email)}
-                              disabled={adminActionLoading === admin.id}
-                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
-                              title="Remove admin"
-                            >
-                              {adminActionLoading === admin.id ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <Trash2 className="w-4 h-4" />
-                              )}
-                            </button>
+                            {isCreator && (
+                              <button
+                                onClick={() => handleRemoveAdmin(admin.id, admin.email)}
+                                disabled={adminActionLoading === admin.id}
+                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+                                title="Remove admin"
+                              >
+                                {adminActionLoading === admin.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Trash2 className="w-4 h-4" />
+                                )}
+                              </button>
+                            )}
                           </div>
                         </div>
                       ))
