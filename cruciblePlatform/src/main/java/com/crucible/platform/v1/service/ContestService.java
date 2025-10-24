@@ -45,7 +45,7 @@ public class ContestService {
   public Mono<ResponseEntity<ManageContestResponse>> getContestForManagement(Long contestId, Long userId) {
     // Fetch contest and contest admins in parallel
     Mono<Contest> contestMono = contestRepository.findById(contestId)
-        .switchIfEmpty(Mono.error(new NotFoundException("Contest not found with id: " + contestId)));
+        .switchIfEmpty(Mono.error(new NotFoundException("Contest not found")));
 
     Mono<List<ContestAdmin>> adminsMono = contestAdminRepository.findByContestId(contestId)
         .collectList();
@@ -54,7 +54,7 @@ public class ContestService {
     return Mono.zip(contestMono, adminsMono)
         .flatMap(tuple -> {
           if (tuple.getT1() == null) {
-            return Mono.error(new NotFoundException("Contest not found with id: " + contestId));
+            return Mono.error(new NotFoundException("Contest not found"));
           }
 
           Contest contest = tuple.getT1();
@@ -124,7 +124,7 @@ public class ContestService {
   public Mono<ResponseEntity<Contest>> updateContest(Long contestId, Long userId, UpdateContest dto) {
     // First, fetch the contest and verify authorization
     Mono<Contest> contestMono = contestRepository.findById(contestId)
-        .switchIfEmpty(Mono.error(new NotFoundException("Contest not found with id: " + contestId)));
+        .switchIfEmpty(Mono.error(new NotFoundException("Contest not found")));
 
     Mono<List<ContestAdmin>> adminsMono = contestAdminRepository.findByContestId(contestId)
         .collectList();
@@ -175,7 +175,7 @@ public class ContestService {
 
   public Mono<ResponseEntity<Void>> deleteContest(Long contestId, Long userId) {
     return contestRepository.findById(contestId)
-        .switchIfEmpty(Mono.error(new NotFoundException("Contest not found with id: " + contestId)))
+        .switchIfEmpty(Mono.error(new NotFoundException("Contest not found")))
         .flatMap(contest -> {
           if (!contest.getCreatorId().equals(userId)) {
             return Mono.error(new UnauthorizedAccessException("Only the creator can delete this contest"));

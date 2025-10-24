@@ -47,7 +47,7 @@ const Forbidden: React.FC<ForbiddenProps> = ({
         {showBackButton && (
           <button
             onClick={handleBack}
-            className="inline-flex items-center space-x-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-all shadow-lg shadow-red-500/20"
+            className="inline-flex items-center space-x-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-all shadow-lg shadow-red-500/20 cursor-pointer"
           >
             <ArrowLeft className="w-5 h-5" />
             <span>{backButtonText}</span>

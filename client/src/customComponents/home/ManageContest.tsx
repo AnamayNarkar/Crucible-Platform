@@ -537,7 +537,7 @@ const ManageContest = () => {
                   {/* Markdown Description */}
                   <div>
                     <label className="text-sm font-semibold text-gray-700 mb-2 block">Full Description</label>
-                    <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 prose prose-sm max-w-none" data-color-mode="light">
+                    <div className="bg-white rounded-xl border border-gray-200 p-4 prose prose-sm max-w-none" data-color-mode="light">
                       <MDEditor.Markdown source={contest.markdownDescription} />
                     </div>
                   </div>

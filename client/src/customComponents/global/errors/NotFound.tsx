@@ -47,7 +47,7 @@ const NotFound: React.FC<NotFoundProps> = ({
         {showBackButton && (
           <button
             onClick={handleBack}
-            className="inline-flex items-center space-x-2 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20"
+            className="inline-flex items-center space-x-2 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition-all shadow-lg shadow-blue-500/20 cursor-pointer"
           >
             <ArrowLeft className="w-5 h-5" />
             <span>{backButtonText}</span>

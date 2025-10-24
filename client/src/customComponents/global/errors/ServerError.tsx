@@ -3,7 +3,6 @@ import { ArrowLeft, ServerCrash } from 'lucide-react';
 import ServerDownImage from '../../../assets/server-down.webp';
 
 interface ServerErrorProps {
-  title?: string;
   message?: string;
   showBackButton?: boolean;
   backButtonText?: string;
@@ -11,7 +10,6 @@ interface ServerErrorProps {
 }
 
 const ServerError: React.FC<ServerErrorProps> = ({
-  title = '500 - Server Error',
   message = "Something went wrong on our end. We're working to fix it.",
   showBackButton = true,
   backButtonText = 'Go Back',
@@ -45,11 +43,6 @@ const ServerError: React.FC<ServerErrorProps> = ({
             <ServerCrash className="w-12 h-12 text-orange-500" />
           </div>
         </div>
-
-        {/* Title */}
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">
-          {title}
-        </h1>
 
         {/* Message */}
         <p className="text-lg text-gray-600 mb-8 max-w-md mx-auto">

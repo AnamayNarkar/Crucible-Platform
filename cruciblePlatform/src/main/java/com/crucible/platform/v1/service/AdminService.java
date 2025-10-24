@@ -34,7 +34,7 @@ public class AdminService {
 
         // Fetch contest
         Mono<Contest> contestMono = contestRepository.findById(contestId)
-            .switchIfEmpty(Mono.error(new NotFoundException("Contest not found with id: " + contestId)));
+            .switchIfEmpty(Mono.error(new NotFoundException("Contest not found")));
 
         // Fetch user to add
         Mono<User> userMono = userRepository.findByEmail(email)
@@ -64,7 +64,7 @@ public class AdminService {
 
         // Fetch contest
         Mono<Contest> contestMono = contestRepository.findById(contestId)
-            .switchIfEmpty(Mono.error(new NotFoundException("Contest not found with id: " + contestId)));
+            .switchIfEmpty(Mono.error(new NotFoundException("Contest not found")));
 
         // Fetch user to remove
         Mono<User> userMono = userRepository.findByEmail(email)
