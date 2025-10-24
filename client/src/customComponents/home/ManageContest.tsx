@@ -6,7 +6,16 @@ import {
   addAdminToContest, 
   removeAdminFromContest,
   deleteContest,
-  updateContest
+  updateContest,
+  createQuestion,
+  updateQuestion,
+  deleteQuestion,
+  getTestCasesByQuestion,
+  createTestCase,
+  updateTestCase,
+  deleteTestCase,
+  type Question as QuestionType,
+  type TestCase
 } from '../../services/api/contest';
 import type { ManageContestData } from '../../services/types/manageContest';
 import { 
@@ -25,7 +34,8 @@ import {
   ImageIcon,
   Sparkles,
   Shield,
-  Save
+  Save,
+  Plus
 } from 'lucide-react';
 import MDEditor from '@uiw/react-md-editor';
 import EditContestDetails, { type ContestFormData } from './EditContestDetails';
@@ -55,6 +65,17 @@ const ManageContest = () => {
     startTime: '',
     endTime: '',
   });
+
+  // Question modal state
+  const [activeTab, setActiveTab] = useState<'question' | 'testcases'>('question');
+  const [selectedQuestion, setSelectedQuestion] = useState<QuestionType | null>(null);
+  const [questionFormData, setQuestionFormData] = useState({
+    title: '',
+    markdownDescription: '',
+    points: 0,
+  });
+  const [testCases, setTestCases] = useState<TestCase[]>([]);
+  const [isLoadingTestCases, setIsLoadingTestCases] = useState(false);
 
   const user = useSelector((state: any) => state.auth.user);
   const isCreator = user && data ? user.id === data.contest.creatorId : false;
@@ -215,6 +236,206 @@ const ManageContest = () => {
     }
   };
 
+  // Question management handlers
+  const handleOpenQuestionModal = (question?: QuestionType) => {
+    if (question) {
+      setSelectedQuestion(question);
+      setQuestionFormData({
+        title: question.title,
+        markdownDescription: question.markdownDescription,
+        points: question.points,
+      });
+      loadTestCases(question.id);
+    } else {
+      setSelectedQuestion(null);
+      setQuestionFormData({
+        title: '',
+        markdownDescription: '',
+        points: 0,
+      });
+      setTestCases([]);
+    }
+    setActiveTab('question');
+    setIsQuestionsModalOpen(true);
+  };
+
+  const loadTestCases = async (questionId: number) => {
+    setIsLoadingTestCases(true);
+    try {
+      const response = await getTestCasesByQuestion(questionId);
+      if (response && response.data) {
+        setTestCases(response.data);
+      }
+    } catch (error: any) {
+      console.error('Error loading test cases:', error);
+    } finally {
+      setIsLoadingTestCases(false);
+    }
+  };
+
+  const handleQuestionInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setQuestionFormData(prev => ({
+      ...prev,
+      [name]: name === 'points' ? Number(value) : value
+    }));
+  };
+
+  const handleQuestionMarkdownChange = (value: string | undefined) => {
+    setQuestionFormData(prev => ({ ...prev, markdownDescription: value || '' }));
+  };
+
+  const handleSaveQuestion = async () => {
+    if (!contestId) return;
+    
+    if (!questionFormData.title || !questionFormData.markdownDescription || questionFormData.points <= 0) {
+      alert('Please fill all required fields');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      if (selectedQuestion) {
+        // Update existing question
+        const result = await updateQuestion(selectedQuestion.id, questionFormData);
+        if (result && result.data) {
+          setData(prevData => {
+            if (!prevData) return prevData;
+            return {
+              ...prevData,
+              questions: prevData.questions.map(q => 
+                q.id === selectedQuestion.id ? result.data : q
+              )
+            };
+          });
+          setSuccessMessage('Question updated successfully!');
+          setTimeout(() => setSuccessMessage(null), 3000);
+        }
+      } else {
+        // Create new question
+        const result = await createQuestion({
+          ...questionFormData,
+          contestId: Number(contestId)
+        });
+        if (result && result.data) {
+          setData(prevData => {
+            if (!prevData) return prevData;
+            return {
+              ...prevData,
+              questions: [...prevData.questions, result.data]
+            };
+          });
+          setSuccessMessage('Question created successfully!');
+          setTimeout(() => setSuccessMessage(null), 3000);
+          setIsQuestionsModalOpen(false);
+        }
+      }
+    } catch (error: any) {
+      alert(error?.message || 'Failed to save question');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteQuestion = async (questionId: number) => {
+    if (!confirm('Are you sure you want to delete this question? This will also delete all associated test cases.')) return;
+
+    try {
+      const success = await deleteQuestion(questionId);
+      if (success) {
+        setData(prevData => {
+          if (!prevData) return prevData;
+          return {
+            ...prevData,
+            questions: prevData.questions.filter(q => q.id !== questionId)
+          };
+        });
+        setSuccessMessage('Question deleted successfully!');
+        setTimeout(() => setSuccessMessage(null), 3000);
+      }
+    } catch (error: any) {
+      alert(error?.message || 'Failed to delete question');
+    }
+  };
+
+  // Test case handlers
+  const handleAddTestCase = () => {
+    if (!selectedQuestion) return;
+    
+    setTestCases(prev => [...prev, {
+      id: Date.now(), // Temporary ID for new test cases
+      questionId: selectedQuestion.id,
+      input: '',
+      expectedOutput: '',
+      isSample: false,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    }]);
+  };
+
+  const handleTestCaseChange = (index: number, field: keyof TestCase, value: string | boolean) => {
+    setTestCases(prev => prev.map((tc, i) => 
+      i === index ? { ...tc, [field]: value } : tc
+    ));
+  };
+
+  const handleDeleteTestCase = async (testCaseId: number, index: number) => {
+    // If it's a new test case (temporary ID > 1000000000000), just remove from state
+    if (testCaseId > 1000000000000) {
+      setTestCases(prev => prev.filter((_, i) => i !== index));
+      return;
+    }
+
+    if (!confirm('Are you sure you want to delete this test case?')) return;
+
+    try {
+      const success = await deleteTestCase(testCaseId);
+      if (success) {
+        setTestCases(prev => prev.filter(tc => tc.id !== testCaseId));
+        setSuccessMessage('Test case deleted successfully!');
+        setTimeout(() => setSuccessMessage(null), 3000);
+      }
+    } catch (error: any) {
+      alert(error?.message || 'Failed to delete test case');
+    }
+  };
+
+  const handleSaveTestCases = async () => {
+    if (!selectedQuestion) return;
+
+    setIsSubmitting(true);
+    try {
+      for (const testCase of testCases) {
+        if (testCase.id > 1000000000000) {
+          // Create new test case
+          await createTestCase({
+            questionId: selectedQuestion.id,
+            input: testCase.input,
+            expectedOutput: testCase.expectedOutput,
+            isSample: testCase.isSample,
+          });
+        } else {
+          // Update existing test case
+          await updateTestCase(testCase.id, {
+            questionId: selectedQuestion.id,
+            input: testCase.input,
+            expectedOutput: testCase.expectedOutput,
+            isSample: testCase.isSample,
+          });
+        }
+      }
+      
+      // Reload test cases
+      await loadTestCases(selectedQuestion.id);
+      setSuccessMessage('Test cases saved successfully!');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (error: any) {
+      alert(error?.message || 'Failed to save test cases');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -326,82 +547,247 @@ const ManageContest = () => {
       {/* Edit Questions Modal */}
       {isQuestionsModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-7xl w-full max-h-[90vh] overflow-hidden flex flex-col">
             {/* Modal Header */}
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gradient-to-r from-blue-50 to-white">
-              <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-2">
-                <FileQuestion className="w-6 h-6 text-blue-500" />
-                <span>Manage Questions</span>
-              </h2>
-              <button
-                onClick={() => setIsQuestionsModalOpen(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
-              >
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto p-6">
-              <div className="mb-4 flex items-center justify-between">
-                <p className="text-gray-600">Manage your contest questions here</p>
-                <button className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm cursor-pointer">
-                  <span>Add Question</span>
+            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-2">
+                  <FileQuestion className="w-6 h-6 text-blue-500" />
+                  <span>{selectedQuestion ? 'Edit Question' : 'Create Question'}</span>
+                </h2>
+                <button
+                  onClick={() => setIsQuestionsModalOpen(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
                 </button>
               </div>
-
-              {questions.length > 0 ? (
-                <div className="space-y-3">
-                  {questions.map((question, index) => (
-                    <div
-                      key={question.id}
-                      className="p-4 bg-white border border-gray-200 rounded-xl hover:shadow-md hover:border-gray-300 transition-all"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-start space-x-3 flex-1 min-w-0">
-                          <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg border border-blue-100 flex-shrink-0">
-                            #{index + 1}
-                          </span>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-base font-semibold text-gray-900 mb-1">{question.title}</h3>
-                            <div className="flex items-center space-x-4 text-sm text-gray-600">
-                              <span className="font-medium">Points: {question.points}</span>
-                              <span>•</span>
-                              <span>ID: {question.id}</span>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2 flex-shrink-0">
-                          <button className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer" title="Edit question">
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer" title="Delete question">
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-16">
-                  <FileQuestion className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500 mb-4">No questions added yet</p>
-                  <button className="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors shadow-sm cursor-pointer">
-                    Add Your First Question
+              
+              {/* Tab Navigation - Only show when editing existing question */}
+              {selectedQuestion && (
+                <div className="flex space-x-2 bg-white p-1 rounded-lg border border-gray-200 w-fit">
+                  <button
+                    onClick={() => setActiveTab('question')}
+                    className={`px-4 py-2 rounded-md font-medium transition-all cursor-pointer ${
+                      activeTab === 'question'
+                        ? 'bg-blue-500 text-white shadow-sm'
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    Question Details
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('testcases')}
+                    className={`px-4 py-2 rounded-md font-medium transition-all cursor-pointer ${
+                      activeTab === 'testcases'
+                        ? 'bg-blue-500 text-white shadow-sm'
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    Test Cases ({testCases.length})
                   </button>
                 </div>
               )}
             </div>
 
-            {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-end">
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {activeTab === 'question' ? (
+                <div className="space-y-6">
+                  {/* Question Title */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Question Title <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="title"
+                      value={questionFormData.title}
+                      onChange={handleQuestionInputChange}
+                      placeholder="e.g., Two Sum Problem"
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                      required
+                    />
+                  </div>
+
+                  {/* Points */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Points <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="points"
+                      value={questionFormData.points}
+                      onChange={handleQuestionInputChange}
+                      placeholder="100"
+                      min="1"
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all"
+                      required
+                    />
+                  </div>
+
+                  {/* Markdown Description with Preview */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Problem Description <span className="text-red-500">*</span>
+                    </label>
+                    <div className="border border-gray-300 rounded-lg overflow-hidden">
+                      <MDEditor
+                        value={questionFormData.markdownDescription}
+                        onChange={handleQuestionMarkdownChange}
+                        preview="live"
+                        height={400}
+                        data-color-mode="light"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">
+                      Use Markdown to format your problem description. The preview is shown on the right.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Test Cases Header */}
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-gray-900">Test Cases</h3>
+                    <button
+                      onClick={handleAddTestCase}
+                      className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-all shadow-sm cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add Test Case</span>
+                    </button>
+                  </div>
+
+                  {/* Test Cases List */}
+                  {isLoadingTestCases ? (
+                    <div className="text-center py-12">
+                      <Loader2 className="w-12 h-12 text-blue-500 animate-spin mx-auto mb-4" />
+                      <p className="text-gray-600">Loading test cases...</p>
+                    </div>
+                  ) : testCases.length > 0 ? (
+                    <div className="space-y-4">
+                      {testCases.map((testCase, index) => (
+                        <div
+                          key={testCase.id}
+                          className="p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-3"
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <span className="px-2.5 py-1 bg-blue-500 text-white text-xs font-bold rounded-lg">
+                                #{index + 1}
+                              </span>
+                              <label className="flex items-center space-x-2 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={testCase.isSample}
+                                  onChange={(e) => handleTestCaseChange(index, 'isSample', e.target.checked)}
+                                  className="w-4 h-4 text-blue-500 rounded focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+                                />
+                                <span className="text-sm font-medium text-gray-700">Sample Test Case</span>
+                              </label>
+                            </div>
+                            <button
+                              onClick={() => handleDeleteTestCase(testCase.id, index)}
+                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                              title="Delete test case"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                Input
+                              </label>
+                              <textarea
+                                value={testCase.input}
+                                onChange={(e) => handleTestCaseChange(index, 'input', e.target.value)}
+                                placeholder="Enter input..."
+                                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-mono text-sm"
+                                rows={4}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                                Expected Output
+                              </label>
+                              <textarea
+                                value={testCase.expectedOutput}
+                                onChange={(e) => handleTestCaseChange(index, 'expectedOutput', e.target.value)}
+                                placeholder="Enter expected output..."
+                                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-mono text-sm"
+                                rows={4}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
+                      <FileQuestion className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-500 mb-4">No test cases added yet</p>
+                      <button
+                        onClick={handleAddTestCase}
+                        className="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors shadow-sm cursor-pointer"
+                      >
+                        Add Your First Test Case
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer - Different buttons based on active tab */}
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-end space-x-3">
               <button
                 onClick={() => setIsQuestionsModalOpen(false)}
                 className="px-5 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-medium transition-all cursor-pointer"
               >
-                Close
+                Cancel
               </button>
+              
+              {activeTab === 'question' ? (
+                <button
+                  onClick={handleSaveQuestion}
+                  disabled={isSubmitting}
+                  className="inline-flex items-center space-x-2 px-6 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-medium shadow-lg shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Saving Question...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-5 h-5" />
+                      <span>Save Question</span>
+                    </>
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={handleSaveTestCases}
+                  disabled={isSubmitting}
+                  className="inline-flex items-center space-x-2 px-6 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-medium shadow-lg shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                      <span>Saving Test Cases...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-5 h-5" />
+                      <span>Save Test Cases</span>
+                    </>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -643,11 +1029,11 @@ const ManageContest = () => {
                     <span>Questions ({questions.length})</span>
                   </h2>
                   <button 
-                    onClick={() => setIsQuestionsModalOpen(true)}
+                    onClick={() => handleOpenQuestionModal()}
                     className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm cursor-pointer"
                   >
-                    <span>Edit</span>
-                    <Edit className="w-4 h-4" />
+                    <span>Add</span>
+                    <Plus className="w-4 h-4" />
                   </button>
                 </div>
 
@@ -669,12 +1055,22 @@ const ManageContest = () => {
                                 <p className="text-xs text-gray-600">Points: {question.points}</p>
                               </div>
                             </div>
-                            <button 
-                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
-                              title="Delete question"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            <div className="flex items-center space-x-2">
+                              <button 
+                                onClick={() => handleOpenQuestionModal(question)}
+                                className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
+                                title="Edit question"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button 
+                                onClick={() => handleDeleteQuestion(question.id)}
+                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors flex-shrink-0 cursor-pointer"
+                                title="Delete question"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -683,7 +1079,10 @@ const ManageContest = () => {
                     <div className="text-center py-12">
                       <FileQuestion className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                       <p className="text-gray-500 mb-4">No questions added yet</p>
-                      <button className="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors shadow-sm cursor-pointer">
+                      <button 
+                        onClick={() => handleOpenQuestionModal()}
+                        className="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors shadow-sm cursor-pointer"
+                      >
                         Add Your First Question
                       </button>
                     </div>

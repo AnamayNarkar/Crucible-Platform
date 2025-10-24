@@ -196,3 +196,199 @@ export async function removeAdminFromContest(contestId: number, email: string): 
     throw error;
   }
 }
+
+// ==================== Question APIs ====================
+
+export interface CreateQuestionPayload {
+  title: string;
+  markdownDescription: string;
+  points: number;
+  contestId: number;
+}
+
+export interface UpdateQuestionPayload {
+  title: string;
+  markdownDescription: string;
+  points: number;
+}
+
+export interface Question {
+  id: number;
+  title: string;
+  markdownDescription: string;
+  points: number;
+  creatorId: number;
+  contestId: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Create a new question
+ * @param questionData - The question data to create
+ */
+export async function createQuestion(questionData: CreateQuestionPayload): Promise<{ message: string; data: Question } | null> {
+  try {
+    const response = await axiosInstance.post('/questions', questionData);
+    return response.data;
+  } catch (error: any) {
+    const result = handleApiError(error, 'Failed to create question');
+    if (result && 'isServerDown' in result) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Get a question by ID
+ * @param questionId - The question ID
+ */
+export async function getQuestion(questionId: number): Promise<{ message: string; data: Question } | null> {
+  try {
+    const response = await axiosInstance.get(`/questions/${questionId}`);
+    return response.data;
+  } catch (error: any) {
+    const result = handleApiError(error, 'Failed to fetch question');
+    if (result && 'isServerDown' in result) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Update a question
+ * @param questionId - The question ID
+ * @param questionData - The question data to update
+ */
+export async function updateQuestion(
+  questionId: number,
+  questionData: UpdateQuestionPayload
+): Promise<{ message: string; data: Question } | null> {
+  try {
+    const response = await axiosInstance.put(`/questions/${questionId}`, questionData);
+    return response.data;
+  } catch (error: any) {
+    const result = handleApiError(error, 'Failed to update question');
+    if (result && 'isServerDown' in result) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Delete a question
+ * @param questionId - The question ID
+ */
+export async function deleteQuestion(questionId: number): Promise<boolean> {
+  try {
+    await axiosInstance.delete(`/questions/${questionId}`);
+    return true;
+  } catch (error: any) {
+    const result = handleApiError(error, 'Failed to delete question');
+    if (result && 'isServerDown' in result) {
+      return false;
+    }
+    throw error;
+  }
+}
+
+// ==================== Test Case APIs ====================
+
+export interface TestCase {
+  id: number;
+  questionId: number;
+  input: string;
+  expectedOutput: string;
+  isSample: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateTestCasePayload {
+  questionId: number;
+  input: string;
+  expectedOutput: string;
+  isSample: boolean;
+}
+
+export interface UpdateTestCasePayload {
+  questionId: number;
+  input: string;
+  expectedOutput: string;
+  isSample: boolean;
+}
+
+/**
+ * Create a new test case
+ * @param testCaseData - The test case data to create
+ */
+export async function createTestCase(testCaseData: CreateTestCasePayload): Promise<{ message: string; data: TestCase } | null> {
+  try {
+    const response = await axiosInstance.post('/test-cases', testCaseData);
+    return response.data;
+  } catch (error: any) {
+    const result = handleApiError(error, 'Failed to create test case');
+    if (result && 'isServerDown' in result) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Get all test cases for a question
+ * @param questionId - The question ID
+ */
+export async function getTestCasesByQuestion(questionId: number): Promise<{ message: string; data: TestCase[] } | null> {
+  try {
+    const response = await axiosInstance.get(`/test-cases/question/${questionId}`);
+    return response.data;
+  } catch (error: any) {
+    const result = handleApiError(error, 'Failed to fetch test cases');
+    if (result && 'isServerDown' in result) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Update a test case
+ * @param testCaseId - The test case ID
+ * @param testCaseData - The test case data to update
+ */
+export async function updateTestCase(
+  testCaseId: number,
+  testCaseData: UpdateTestCasePayload
+): Promise<{ message: string; data: TestCase } | null> {
+  try {
+    const response = await axiosInstance.put(`/test-cases/${testCaseId}`, testCaseData);
+    return response.data;
+  } catch (error: any) {
+    const result = handleApiError(error, 'Failed to update test case');
+    if (result && 'isServerDown' in result) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Delete a test case
+ * @param testCaseId - The test case ID
+ */
+export async function deleteTestCase(testCaseId: number): Promise<boolean> {
+  try {
+    await axiosInstance.delete(`/test-cases/${testCaseId}`);
+    return true;
+  } catch (error: any) {
+    const result = handleApiError(error, 'Failed to delete test case');
+    if (result && 'isServerDown' in result) {
+      return false;
+    }
+    throw error;
+  }
+}

@@ -14,6 +14,7 @@ export interface Contest {
 export interface Question {
   id: number;
   creatorId: number;
+  contestId: number;
   title: string;
   markdownDescription: string;
   points: number;
