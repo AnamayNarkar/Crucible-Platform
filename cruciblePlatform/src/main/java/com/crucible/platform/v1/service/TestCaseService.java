@@ -13,6 +13,7 @@ import com.crucible.platform.v1.repository.QuestionRepository;
 import com.crucible.platform.v1.repository.TestCaseRepository;
 
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 
 import java.time.LocalDateTime;
 
@@ -65,6 +66,94 @@ public class TestCaseService {
                         .flatMap(contest -> 
                             // 3. Perform the authorization check
                             checkPermissions(contest, creatorId, saveTestCase)
+                        )
+                );
+    }
+
+    /**
+     * Get all test cases for a question.
+     */
+    public Mono<Flux<TestCase>> getTestCasesByQuestion(Long questionId, Long userId) {
+        // Check authorization first
+        return questionRepository.findById(questionId)
+                .switchIfEmpty(Mono.error(new NotFoundException("Question not found with ID: " + questionId)))
+                .flatMap(question -> 
+                    contestRepository.findById(question.getContestId())
+                        .switchIfEmpty(Mono.error(new NotFoundException("Contest not found for question")))
+                        .flatMap(contest -> {
+                            if (contest.getCreatorId().equals(userId)) {
+                                return Mono.just(testCaseRepository.findByQuestionId(questionId));
+                            }
+
+                            return contestAdminRepository
+                                    .findByContestIdAndAdminId(contest.getId(), userId)
+                                    .hasElement()
+                                    .flatMap(isAdmin -> {
+                                        if (isAdmin) {
+                                            return Mono.just(testCaseRepository.findByQuestionId(questionId));
+                                        } else {
+                                            return Mono.error(new ForbiddenException("You are not authorized to view test cases for this question"));
+                                        }
+                                    });
+                        })
+                );
+    }
+
+    /**
+     * Update a test case.
+     */
+    public Mono<TestCase> updateTestCase(Long testCaseId, AlterTestCaseDTO testCaseDTO, Long userId) {
+        return testCaseRepository.findById(testCaseId)
+                .switchIfEmpty(Mono.error(new NotFoundException("Test case not found with ID: " + testCaseId)))
+                .flatMap(existingTestCase -> 
+                    questionRepository.findById(existingTestCase.getQuestionId())
+                        .switchIfEmpty(Mono.error(new NotFoundException("Question not found")))
+                        .flatMap(question -> 
+                            contestRepository.findById(question.getContestId())
+                                .switchIfEmpty(Mono.error(new NotFoundException("Contest not found")))
+                                .flatMap(contest -> {
+                                    Mono<TestCase> updateOperation = Mono.fromSupplier(() -> {
+                                        existingTestCase.setInput(testCaseDTO.getInput());
+                                        existingTestCase.setExpectedOutput(testCaseDTO.getExpectedOutput());
+                                        existingTestCase.setIsSample(testCaseDTO.getIsSample());
+                                        existingTestCase.setUpdatedAt(LocalDateTime.now());
+                                        return existingTestCase;
+                                    }).flatMap(testCaseRepository::save);
+
+                                    return checkPermissions(contest, userId, updateOperation);
+                                })
+                        )
+                );
+    }
+
+    /**
+     * Delete a test case.
+     */
+    public Mono<Void> deleteTestCase(Long testCaseId, Long userId) {
+        return testCaseRepository.findById(testCaseId)
+                .switchIfEmpty(Mono.error(new NotFoundException("Test case not found with ID: " + testCaseId)))
+                .flatMap(testCase -> 
+                    questionRepository.findById(testCase.getQuestionId())
+                        .switchIfEmpty(Mono.error(new NotFoundException("Question not found")))
+                        .flatMap(question -> 
+                            contestRepository.findById(question.getContestId())
+                                .switchIfEmpty(Mono.error(new NotFoundException("Contest not found")))
+                                .flatMap(contest -> {
+                                    if (contest.getCreatorId().equals(userId)) {
+                                        return testCaseRepository.deleteById(testCaseId);
+                                    }
+
+                                    return contestAdminRepository
+                                            .findByContestIdAndAdminId(contest.getId(), userId)
+                                            .hasElement()
+                                            .flatMap(isAdmin -> {
+                                                if (isAdmin) {
+                                                    return testCaseRepository.deleteById(testCaseId);
+                                                } else {
+                                                    return Mono.error(new ForbiddenException("You are not authorized to delete this test case"));
+                                                }
+                                            });
+                                })
                         )
                 );
     }
