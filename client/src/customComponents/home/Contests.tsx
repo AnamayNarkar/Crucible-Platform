@@ -1,15 +1,10 @@
+// keep the contest state local to this component for simplicity
+// there is no need for centralized state management here using Redux.
+
 import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import type { RootState, AppDispatch } from '../../services/state/store';
-import {
-  setUserContests,
-  setOngoingContests,
-  setUpcomingContests,
-  setPastContests,
-  setLoading,
-} from '../../services/state/slice/contests';
-import contestsDataRaw from '../../../contests.json';
+import { useSelector } from 'react-redux';
+import { getLiveContests, getUpcomingContests, getPastContests, getUserContests } from '../../services/api/contest';
 import {
   Calendar,
   Clock,
@@ -23,19 +18,12 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Contest } from '../../services/types';
-
-// Load the JSON data
-const contestsData = contestsDataRaw as {
-  userContests: Contest[];
-  ongoingContests: Contest[];
-  upcomingContests: Contest[];
-  pastContests: Contest[];
-};
+import type { RootState } from '../../services/state/store';
 
 /**
  * A reusable, styled card component to display contest information.
  */
-const ContestCard = ({ contest, type = 'default' }: { contest: Contest; type?: 'user' | 'default' }) => {
+const ContestCard = ({ contest, type = 'default', onButtonClick }: { contest: Contest; type?: 'user' | 'default'; onButtonClick?: () => void }) => {
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -100,7 +88,7 @@ const ContestCard = ({ contest, type = 'default' }: { contest: Contest; type?: '
             <Users className="w-4 h-4 text-gray-400" />
             <span>Contest #{contest.id}</span>
           </div>
-          <button className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-sm font-medium rounded-lg shadow-lg shadow-blue-500/30 transform group-hover:scale-105 transition-all cursor-pointer">
+          <button onClick={onButtonClick} className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-sm font-medium rounded-lg shadow-lg shadow-blue-500/30 transform group-hover:scale-105 transition-all cursor-pointer">
             {type === 'user' ? 'Manage' : 'View Details'}
           </button>
         </div>
@@ -175,27 +163,58 @@ const EmptyState = ({
  * Main Contests Page Component
  */
 const Contests = () => {
-  const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { userContests, ongoingContests, upcomingContests, pastContests, loading } = useSelector(
-    (state: RootState) => state.contests
-  );
+  
+  // Get authentication status from Redux
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isLoggedIn);
+  
+  // Local state for contests
+  const [userContests, setUserContests] = useState<Contest[]>([]);
+  const [ongoingContests, setOngoingContests] = useState<Contest[]>([]);
+  const [upcomingContests, setUpcomingContests] = useState<Contest[]>([]);
+  const [pastContests, setPastContests] = useState<Contest[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const [activeTab, setActiveTab] = useState<'ongoing' | 'upcoming' | 'past'>('ongoing');
 
-
-  // fetch contests data, currently simulated with local JSON
+  // Fetch contests data from API
   useEffect(() => {
-    dispatch(setLoading(true));
-    const timer = setTimeout(() => {
-      dispatch(setUserContests(contestsData.userContests));
-      dispatch(setOngoingContests(contestsData.ongoingContests));
-      dispatch(setUpcomingContests(contestsData.upcomingContests));
-      dispatch(setPastContests(contestsData.pastContests));
-      dispatch(setLoading(false));
-    }, 500);
+    const fetchContests = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        // Fetch public contests (live, upcoming, past) - these are always fetched
+        const [liveData, upcomingData, pastData] = await Promise.all([
+          getLiveContests(),
+          getUpcomingContests(),
+          getPastContests(),
+        ]);
+        
+        if (liveData) setOngoingContests(liveData);
+        if (upcomingData) setUpcomingContests(upcomingData);
+        if (pastData) setPastContests(pastData);
+        
+        // Fetch user's contests only if authenticated
+        if (isAuthenticated) {
+          const userContestsData = await getUserContests();
+          if (userContestsData) {
+            setUserContests(userContestsData);
+          }
+        } else {
+          setUserContests([]);
+        }
+      } catch (err) {
+        console.error('Error fetching contests:', err);
+        setError('Failed to load contests');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    return () => clearTimeout(timer);
-  }, [dispatch]);
+    fetchContests();
+  }, [isAuthenticated]);
 
   const getTimeRemaining = (startTime: string) => {
     const now = new Date();
@@ -277,6 +296,28 @@ const Contests = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[70vh]">
+        <div className="max-w-md mx-auto bg-red-50 border border-red-200 rounded-2xl p-8 text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">Error Loading Contests</h3>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
@@ -295,32 +336,34 @@ const Contests = () => {
         </div>
 
         <div className="space-y-16">
-          {/* Your Contests Section */}
-          <section>
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Your Contests</h2>
-              <p className="text-md text-gray-600">Contests you created or manage</p>
-            </div>
-
-            {userContests.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {userContests.map((contest) => (
-                  <ContestCard key={contest.id} contest={contest} type="user" />
-                ))}
+          {/* Your Contests Section - Only show if authenticated */}
+          {isAuthenticated && (
+            <section>
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">Your Contests</h2>
+                <p className="text-md text-gray-600">Contests you created or manage</p>
               </div>
-            ) : (
-              <EmptyState
-                icon={Sparkles}
-                title="No Contests Yet"
-                message="Create your first contest and start challenging others!"
-              >
-                <button className="inline-flex items-center space-x-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium shadow-lg shadow-blue-500/30 transform hover:scale-105 transition-all cursor-pointer" onClick={() => navigate('/contests/create')}>
-                  <Plus className="w-5 h-5" />
-                  <span>Create Your First Contest</span>
-                </button>
-              </EmptyState>
-            )}
-          </section>
+
+              {userContests.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {userContests.map((contest) => (
+                    <ContestCard key={contest.id} contest={contest} type="user" onButtonClick={() => navigate(`/contests/manage/${contest.id}`)} />
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  icon={Sparkles}
+                  title="No Contests Yet"
+                  message="Create your first contest and start challenging others!"
+                >
+                  <button className="inline-flex items-center space-x-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium shadow-lg shadow-blue-500/30 transform hover:scale-105 transition-all cursor-pointer" onClick={() => navigate('/contests/create')}>
+                    <Plus className="w-5 h-5" />
+                    <span>Create Your First Contest</span>
+                  </button>
+                </EmptyState>
+              )}
+            </section>
+          )}
 
           {/* All Contests Section */}
           <section>

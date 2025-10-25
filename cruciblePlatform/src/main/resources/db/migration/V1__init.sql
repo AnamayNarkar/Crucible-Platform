@@ -20,9 +20,6 @@ CREATE TABLE contests (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-INSERT INTO users (username, email, hashed_password, roles) VALUES
-('user1', 'user1@example.com', '$2a$10$5Bjuh4BwIg3Xug/OHMy2EezXfVEM0H1MPlqd0vClOx72nViUUQPci', ARRAY['USER']); -- password is 'password123';
-
 CREATE TABLE questions (
     id BIGSERIAL PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
@@ -77,6 +74,52 @@ CREATE TABLE contest_admins (
     admin_id BIGINT REFERENCES users(id),
     PRIMARY KEY (contest_id, admin_id)
 );
+
+-- ---
+-- SEED DATA
+-- ---
+
+-- Seed Users
+INSERT INTO users (username, email, hashed_password, roles) VALUES
+('user1', 'user1@example.com', '$2a$10$5Bjuh4BwIg3Xug/OHMy2EezXfVEM0H1MPlqd0vClOx72nViUUQPci', ARRAY['USER']); -- password is 'password123'
+
+INSERT INTO users (username, email, hashed_password, roles) VALUES
+('anamaynarkar', 'anamay.narkar.17@gmail.com', '$2a$10$WlB2GgS6WhZSEHoXKJjGF.1d6B.OyHuEB45kJ/DD9nRyUTcuXoggC', ARRAY['USER']);
+
+-- Seed Contests (assuming current date is ~2025-10-25)
+-- Note: We use a subquery to robustly find the creator's ID.
+
+-- Past Contest
+INSERT INTO contests (name, card_description, markdown_description, creator_id, start_time, end_time) VALUES
+('CodeSprint 2024',
+'A look back at our first major coding challenge of 2024.',
+'# CodeSprint 2024\nThis was a 3-hour challenge focusing on dynamic programming. Congratulations to the winners!',
+(SELECT id FROM users WHERE username = 'anamaynarkar'),
+'2024-10-01 12:00:00',
+'2024-10-01 15:00:00');
+
+-- Ongoing Contest
+INSERT INTO contests (name, card_description, markdown_description, creator_id, start_time, end_time) VALUES
+('Weekend Warrior II',
+'Live now! Solve 5 challenging problems in 24 hours.',
+'# Weekend Warrior II\nThe challenge is live. Submissions are open. Good luck!',
+(SELECT id FROM users WHERE username = 'anamaynarkar'),
+'2025-10-25 12:00:00',
+'2025-10-26 12:00:00');
+
+-- Upcoming Contest
+INSERT INTO contests (name, card_description, markdown_description, creator_id, start_time, end_time) VALUES
+('AlgoMania 2026',
+'Get ready for the first major challenge of 2026. Registration opens soon!',
+'# AlgoMania 2026\nPrepare your algorithms for a 3-hour sprint. More details to be announced.',
+(SELECT id FROM users WHERE username = 'anamaynarkar'),
+'2026-01-15 09:00:00',
+'2026-01-15 12:00:00');
+
+
+-- ---
+-- INDEXES
+-- ---
 
 -- Add indexes for better query performance
 CREATE INDEX idx_questions_creator_id ON questions(creator_id);

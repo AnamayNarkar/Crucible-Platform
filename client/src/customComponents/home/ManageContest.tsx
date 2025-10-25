@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import MarkdownPreview from '@uiw/react-markdown-preview';
 import { useSelector } from 'react-redux';
 import { 
   getManageContestData, 
@@ -37,7 +38,7 @@ import {
   Save,
   Plus
 } from 'lucide-react';
-import MDEditor from '@uiw/react-md-editor';
+import MarkdownEditor from '../global/MarkdownEditor';
 import EditContestDetails, { type ContestFormData } from './EditContestDetails';
 import ErrorComponent from '../global/errors';
 import Forbidden from '../global/errors/Forbidden';
@@ -484,6 +485,8 @@ const ManageContest = () => {
 
   const { contest, admins, questions } = data;
 
+  console.log("Markdown description:", contest.markdownDescription.slice(0, 100));
+
   return (
     <>
       {/* Edit Contest Modal */}
@@ -632,15 +635,12 @@ const ManageContest = () => {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Problem Description <span className="text-red-500">*</span>
                     </label>
-                    <div className="border border-gray-300 rounded-lg overflow-hidden">
-                      <MDEditor
-                        value={questionFormData.markdownDescription}
-                        onChange={handleQuestionMarkdownChange}
-                        preview="live"
-                        height={400}
-                        data-color-mode="light"
-                      />
-                    </div>
+                    <MarkdownEditor
+                      value={questionFormData.markdownDescription}
+                      onChange={(value) => handleQuestionMarkdownChange(value)}
+                      height={400}
+                      placeholder="Write your problem description using Markdown..."
+                    />
                     <p className="text-xs text-gray-500 mt-2">
                       Use Markdown to format your problem description. The preview is shown on the right.
                     </p>
@@ -924,7 +924,7 @@ const ManageContest = () => {
                   <div>
                     <label className="text-sm font-semibold text-gray-700 mb-2 block">Full Description</label>
                     <div className="bg-white rounded-xl border border-gray-200 p-4 prose prose-sm max-w-none" data-color-mode="light">
-                      <MDEditor.Markdown source={contest.markdownDescription} />
+                      <MarkdownPreview source={contest.markdownDescription} />
                     </div>
                   </div>
                 </div>

@@ -1,11 +1,9 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './slice/auth';
-import contestsReducer from './slice/contests';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
-    contests: contestsReducer,
   },
 });
 

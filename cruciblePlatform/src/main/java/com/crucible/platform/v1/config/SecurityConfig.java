@@ -73,7 +73,10 @@ public class SecurityConfig {
                 "/api/v1/health",
                 "/api/v1/auth/login", // Handled by formLogin
                 "/api/v1/auth/logout", // Handled by logout
-                "/api/v1/auth/register" // Your custom controller
+                "/api/v1/auth/register", // Your custom controller
+                "/api/v1/contests/live",
+                "/api/v1/contests/upcoming",
+                "/api/v1/contests/past"
             ).permitAll()
             .anyExchange().authenticated())
         .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(entryPoint))

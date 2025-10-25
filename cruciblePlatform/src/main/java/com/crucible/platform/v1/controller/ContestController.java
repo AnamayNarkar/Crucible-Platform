@@ -18,6 +18,7 @@ import com.crucible.platform.v1.entity.Contest;
 import com.crucible.platform.v1.service.ContestService;
 
 import reactor.core.publisher.Mono;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/contests")
@@ -27,6 +28,27 @@ public class ContestController {
 
   public ContestController(ContestService contestService) {
     this.contestService = contestService;
+  }
+
+  @GetMapping("/user")
+  public Mono<ResponseEntity<List<Contest>>> getUserManagedContests(WebSession session) {
+    Long userId = (Long) session.getAttributes().get("userId");
+    return contestService.getUserManagedContests(userId);
+  }
+
+  @GetMapping("/live")
+  public Mono<ResponseEntity<List<Contest>>> getLiveContest() {
+    return contestService.getOngoingContests();
+  }
+
+  @GetMapping("/upcoming")
+  public Mono<ResponseEntity<List<Contest>>> getUpcomingContests() {
+    return contestService.getUpcomingContests();
+  }
+
+  @GetMapping("/past")
+  public Mono<ResponseEntity<List<Contest>>> getPastContests() {
+    return contestService.getPastContests();
   }
 
   @PostMapping("")

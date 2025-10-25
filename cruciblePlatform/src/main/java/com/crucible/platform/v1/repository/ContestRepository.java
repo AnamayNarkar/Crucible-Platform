@@ -14,4 +14,6 @@ public interface ContestRepository extends ReactiveCrudRepository<Contest, Long>
 
     Flux<Contest> findByStartTimeLessThanEqualAndEndTimeGreaterThanEqual(LocalDateTime start, LocalDateTime end);
     Flux<Contest> findByStartTimeGreaterThanEqual(LocalDateTime start);
+    Flux<Contest> findByEndTimeLessThanEqual(LocalDateTime end);
+    Flux<Contest> findByCreatorId(Long creatorId);
 }

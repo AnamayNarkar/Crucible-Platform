@@ -97,6 +97,22 @@ public class ContestService {
         });
   }
 
+  public Mono<ResponseEntity<List<Contest>>> getUserManagedContests(Long userId) {
+    // Fetch contests where user is creator
+    Flux<Contest> contestsAsCreator = contestRepository.findByCreatorId(userId);
+
+    // Fetch contests where user is admin
+    Flux<Contest> contestsAsAdmin = contestAdminRepository.findByAdminId(userId)
+        .map(ContestAdmin::getContestId)
+        .flatMap(contestRepository::findById);
+
+    // Merge and distinct to avoid duplicates if user is both creator and admin
+    return Flux.merge(contestsAsCreator, contestsAsAdmin)
+        .distinct()
+        .collectList()
+        .map(contests -> new ResponseEntity<>(contests, "User managed contests retrieved successfully"));
+  }
+
   public Mono<ResponseEntity<Contest>> createContest(WebSession session, CreateContest dto) {
     Long userId = (Long) session.getAttributes().get("userId");
     // This constructor assumes your Contest entity matches the migration
@@ -129,6 +145,13 @@ public class ContestService {
     return contestRepository.findByStartTimeGreaterThanEqual(now)
         .collectList()
         .map(contests -> new ResponseEntity<>(contests, "Upcoming contests retrieved successfully"));
+  }
+
+  public Mono<ResponseEntity<List<Contest>>> getPastContests() {
+    LocalDateTime now = LocalDateTime.now();
+    return contestRepository.findByEndTimeLessThanEqual(now)
+        .collectList()
+        .map(contests -> new ResponseEntity<>(contests, "Past contests retrieved successfully"));
   }
 
   public Mono<ResponseEntity<Contest>> updateContest(Long contestId, Long userId, UpdateContest dto) {

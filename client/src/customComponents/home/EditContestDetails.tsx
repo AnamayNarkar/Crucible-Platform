@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import MDEditor from '@uiw/react-md-editor';
+import MarkdownEditor from '../global/MarkdownEditor';
 import { 
   ImageIcon, 
   FileText, 
@@ -201,17 +201,10 @@ const EditContestDetails: React.FC<EditContestDetailsProps> = ({
           </h2>
         </div>
         <div className="p-6" data-color-mode="light">
-          <MDEditor
+          <MarkdownEditor
             value={formData.markdownDescription}
-            onChange={onMarkdownChange} // Use the prop
-            preview="edit"
+            onChange={(value) => onMarkdownChange(value)}
             height={500}
-            visibleDragbar={false}
-            style={{
-              borderRadius: '12px',
-              overflow: 'hidden',
-              border: '1px solid rgb(229 231 235)',
-            }}
           />
         </div>
       </div>

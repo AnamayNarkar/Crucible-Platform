@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import type { AppDispatch } from '../../services/state/store';
-import MDEditor from '@uiw/react-md-editor';
+import MarkdownPreview from '@uiw/react-markdown-preview';
 import { 
   Calendar, 
   Clock, 
@@ -16,11 +14,10 @@ import {
 import { useNavigate } from 'react-router-dom';
 // Import the new component and the shared type
 import EditContestDetails, { type ContestFormData } from './EditContestDetails';
-import { createContest } from '../../services/state/slice/contests';
+import { createContest } from '@/services/api/contest';
 
 const CreateContest = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch<AppDispatch>();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<ContestFormData>({
     name: '',
@@ -73,15 +70,15 @@ const CreateContest = () => {
     setIsSubmitting(true);
     
     try {
-      // Dispatch the Redux thunk to create the contest
-      const result = await dispatch(createContest({
+      // Call the API to create the contest
+      const result = await createContest({
         name: formData.name,
         bannerImageUrl: formData.bannerImageUrl,
         cardDescription: formData.cardDescription,
         markdownDescription: formData.markdownDescription,
         startTime: formData.startTime,
         endTime: formData.endTime,
-      })).unwrap();
+      });
       console.log('Contest created successfully nigga:', result);
       
       if (result && result.data.id) {
@@ -90,9 +87,10 @@ const CreateContest = () => {
       } else {
         alert('Failed to create contest. Please try again.');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error creating contest:', error);
-      alert(error?.message || 'Failed to create contest. Please try again.');
+      const message = error instanceof Error ? error.message : 'An unknown error occurred';
+      alert(message || 'Failed to create contest. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -239,7 +237,7 @@ const CreateContest = () => {
                     <span>Description Preview</span>
                   </h3>
                   <div className="prose prose-sm max-w-none" data-color-mode="light">
-                    <MDEditor.Markdown 
+                    <MarkdownPreview 
                       source={formData.markdownDescription || '*No description yet...*'} 
                       style={{ 
                         padding: '16px',

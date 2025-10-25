@@ -66,12 +66,60 @@ export async function getAllContests(): Promise<{
 }
 
 /**
+ * Get ongoing/live contests
+ */
+export async function getLiveContests(): Promise<Contest[] | null> {
+  try {
+    const response = await axiosInstance.get('/contests/live');
+    return response.data.data as Contest[];
+  } catch (error: any) {
+    const result = handleApiError(error, 'Failed to fetch live contests');
+    if (result && 'isServerDown' in result) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Get upcoming contests
+ */
+export async function getUpcomingContests(): Promise<Contest[] | null> {
+  try {
+    const response = await axiosInstance.get('/contests/upcoming');
+    return response.data.data as Contest[];
+  } catch (error: any) {
+    const result = handleApiError(error, 'Failed to fetch upcoming contests');
+    if (result && 'isServerDown' in result) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Get past contests
+ */
+export async function getPastContests(): Promise<Contest[] | null> {
+  try {
+    const response = await axiosInstance.get('/contests/past');
+    return response.data.data as Contest[];
+  } catch (error: any) {
+    const result = handleApiError(error, 'Failed to fetch past contests');
+    if (result && 'isServerDown' in result) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
  * Get user's contests
  */
 export async function getUserContests(): Promise<Contest[] | null> {
   try {
     const response = await axiosInstance.get('/contests/user');
-    return response.data as Contest[];
+    return response.data.data as Contest[];
   } catch (error: any) {
     const result = handleApiError(error, 'Failed to fetch user contests');
     if (result && 'isServerDown' in result) {
