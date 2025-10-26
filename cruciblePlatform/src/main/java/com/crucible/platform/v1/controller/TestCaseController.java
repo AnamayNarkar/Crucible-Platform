@@ -15,7 +15,6 @@ import com.crucible.platform.v1.dto.testCase.AlterTestCaseDTO;
 import com.crucible.platform.v1.entity.TestCase;
 import com.crucible.platform.v1.service.TestCaseService;
 
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
@@ -36,12 +35,13 @@ public class TestCaseController {
     }
 
     @GetMapping("/question/{questionId}")
-    public Mono<ResponseEntity<Flux<TestCase>>> getTestCasesByQuestion(
+    public Mono<ResponseEntity<java.util.List<TestCase>>> getTestCasesByQuestion(
             @PathVariable Long questionId,
             WebSession session) {
         Long userId = (Long) session.getAttributes().get("userId");
         return testCaseService.getTestCasesByQuestion(questionId, userId)
-                .map(testCases -> new ResponseEntity<>(testCases, "Test cases fetched successfully"));
+                .flatMap(testCasesFlux -> testCasesFlux.collectList())
+                .map(testCasesList -> new ResponseEntity<>(testCasesList, "Test cases fetched successfully"));
     }
 
     @PutMapping("/{id}")

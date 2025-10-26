@@ -90,28 +90,31 @@ INSERT INTO users (username, email, hashed_password, roles) VALUES
 -- Note: We use a subquery to robustly find the creator's ID.
 
 -- Past Contest
-INSERT INTO contests (name, card_description, markdown_description, creator_id, start_time, end_time) VALUES
+INSERT INTO contests (name, banner_image_url, card_description, markdown_description, creator_id, start_time, end_time) VALUES
 ('CodeSprint 2024',
+'https://images.unsplash.com/photo-1587620962725-abab7fe55159?w=800',
 'A look back at our first major coding challenge of 2024.',
-'# CodeSprint 2024\nThis was a 3-hour challenge focusing on dynamic programming. Congratulations to the winners!',
+E'# CodeSprint 2024\n\nThis was a 3-hour challenge focusing on dynamic programming. Congratulations to the winners!',
 (SELECT id FROM users WHERE username = 'anamaynarkar'),
 '2024-10-01 12:00:00',
 '2024-10-01 15:00:00');
 
 -- Ongoing Contest
-INSERT INTO contests (name, card_description, markdown_description, creator_id, start_time, end_time) VALUES
+INSERT INTO contests (name, banner_image_url, card_description, markdown_description, creator_id, start_time, end_time) VALUES
 ('Weekend Warrior II',
+'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800',
 'Live now! Solve 5 challenging problems in 24 hours.',
-'# Weekend Warrior II\nThe challenge is live. Submissions are open. Good luck!',
+E'# Weekend Warrior II\n\nThe challenge is live. Submissions are open. Good luck!',
 (SELECT id FROM users WHERE username = 'anamaynarkar'),
 '2025-10-25 12:00:00',
 '2025-10-26 12:00:00');
 
 -- Upcoming Contest
-INSERT INTO contests (name, card_description, markdown_description, creator_id, start_time, end_time) VALUES
+INSERT INTO contests (name, banner_image_url, card_description, markdown_description, creator_id, start_time, end_time) VALUES
 ('AlgoMania 2026',
+'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800',
 'Get ready for the first major challenge of 2026. Registration opens soon!',
-'# AlgoMania 2026\nPrepare your algorithms for a 3-hour sprint. More details to be announced.',
+E'# AlgoMania 2026\n\nPrepare your algorithms for a 3-hour sprint. More details to be announced.',
 (SELECT id FROM users WHERE username = 'anamaynarkar'),
 '2026-01-15 09:00:00',
 '2026-01-15 12:00:00');

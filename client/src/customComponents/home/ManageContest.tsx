@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MarkdownPreview from '@uiw/react-markdown-preview';
+import Textarea from '@uiw/react-textarea';
 import { useSelector } from 'react-redux';
 import { 
   getManageContestData, 
@@ -20,21 +21,16 @@ import {
 } from '../../services/api/contest';
 import type { ManageContestData } from '../../services/types/manageContest';
 import { 
-  ArrowLeft, 
-  Calendar, 
-  Clock, 
+  ArrowLeft,
   Edit, 
   Trash2, 
   Users, 
-  FileQuestion,
   Loader2,
   UserPlus,
   Mail,
+  FileQuestion,
   X,
   CheckCircle,
-  ImageIcon,
-  Sparkles,
-  Shield,
   Save,
   Plus
 } from 'lucide-react';
@@ -77,6 +73,16 @@ const ManageContest = () => {
   });
   const [testCases, setTestCases] = useState<TestCase[]>([]);
   const [isLoadingTestCases, setIsLoadingTestCases] = useState(false);
+
+  // Test case modal state
+  const [isTestCaseModalOpen, setIsTestCaseModalOpen] = useState(false);
+  const [selectedTestCase, setSelectedTestCase] = useState<TestCase | null>(null);
+  const [selectedTestCaseIndex, setSelectedTestCaseIndex] = useState<number>(-1);
+  const [testCaseFormData, setTestCaseFormData] = useState({
+    input: '',
+    expectedOutput: '',
+    isSample: false,
+  });
 
   const user = useSelector((state: any) => state.auth.user);
   const isCreator = user && data ? user.id === data.contest.creatorId : false;
@@ -264,11 +270,14 @@ const ManageContest = () => {
     setIsLoadingTestCases(true);
     try {
       const response = await getTestCasesByQuestion(questionId);
-      if (response && response.data) {
+      if (response && response.data && Array.isArray(response.data)) {
         setTestCases(response.data);
+      } else {
+        setTestCases([]);
       }
     } catch (error: any) {
       console.error('Error loading test cases:', error);
+      setTestCases([]);
     } finally {
       setIsLoadingTestCases(false);
     }
@@ -360,80 +369,101 @@ const ManageContest = () => {
   };
 
   // Test case handlers
-  const handleAddTestCase = () => {
+  const handleOpenTestCaseModal = (testCase?: TestCase, index?: number) => {
+    if (testCase && index !== undefined) {
+      setSelectedTestCase(testCase);
+      setSelectedTestCaseIndex(index);
+      setTestCaseFormData({
+        input: testCase.input,
+        expectedOutput: testCase.expectedOutput,
+        isSample: testCase.isSample,
+      });
+    } else {
+      setSelectedTestCase(null);
+      setSelectedTestCaseIndex(-1);
+      setTestCaseFormData({
+        input: '',
+        expectedOutput: '',
+        isSample: false,
+      });
+    }
+    setIsTestCaseModalOpen(true);
+  };
+
+  const handleTestCaseInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value, type } = e.target;
+    setTestCaseFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+    }));
+  };
+
+  const handleSaveTestCaseFromModal = async () => {
     if (!selectedQuestion) return;
     
-    setTestCases(prev => [...prev, {
-      id: Date.now(), // Temporary ID for new test cases
-      questionId: selectedQuestion.id,
-      input: '',
-      expectedOutput: '',
-      isSample: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    }]);
-  };
-
-  const handleTestCaseChange = (index: number, field: keyof TestCase, value: string | boolean) => {
-    setTestCases(prev => prev.map((tc, i) => 
-      i === index ? { ...tc, [field]: value } : tc
-    ));
-  };
-
-  const handleDeleteTestCase = async (testCaseId: number, index: number) => {
-    // If it's a new test case (temporary ID > 1000000000000), just remove from state
-    if (testCaseId > 1000000000000) {
-      setTestCases(prev => prev.filter((_, i) => i !== index));
+    if (!testCaseFormData.input.trim() || !testCaseFormData.expectedOutput.trim()) {
+      alert('Please fill in both input and expected output');
       return;
     }
 
+    setIsSubmitting(true);
+    try {
+      if (selectedTestCase) {
+        // Update existing test case
+        const result = await updateTestCase(selectedTestCase.id, {
+          questionId: selectedQuestion.id,
+          input: testCaseFormData.input,
+          expectedOutput: testCaseFormData.expectedOutput,
+          isSample: testCaseFormData.isSample,
+        });
+
+        if (result && result.data) {
+          setTestCases(prev => prev.map((tc, i) => 
+            i === selectedTestCaseIndex ? result.data : tc
+          ));
+          setSuccessMessage('Test case updated successfully!');
+          setTimeout(() => setSuccessMessage(null), 3000);
+          setIsTestCaseModalOpen(false);
+        }
+      } else {
+        // Create new test case
+        const result = await createTestCase({
+          questionId: selectedQuestion.id,
+          input: testCaseFormData.input,
+          expectedOutput: testCaseFormData.expectedOutput,
+          isSample: testCaseFormData.isSample,
+        });
+
+        if (result && result.data) {
+          setTestCases(prev => [...prev, result.data]);
+          setSuccessMessage('Test case created successfully!');
+          setTimeout(() => setSuccessMessage(null), 3000);
+          setIsTestCaseModalOpen(false);
+        }
+      }
+    } catch (error: any) {
+      alert(error?.message || 'Failed to save test case');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleAddTestCase = () => {
+    handleOpenTestCaseModal();
+  };
+
+  const handleDeleteTestCase = async (testCaseId: number, index: number) => {
     if (!confirm('Are you sure you want to delete this test case?')) return;
 
     try {
       const success = await deleteTestCase(testCaseId);
       if (success) {
-        setTestCases(prev => prev.filter(tc => tc.id !== testCaseId));
+        setTestCases(prev => prev.filter((_, i) => i !== index));
         setSuccessMessage('Test case deleted successfully!');
         setTimeout(() => setSuccessMessage(null), 3000);
       }
     } catch (error: any) {
       alert(error?.message || 'Failed to delete test case');
-    }
-  };
-
-  const handleSaveTestCases = async () => {
-    if (!selectedQuestion) return;
-
-    setIsSubmitting(true);
-    try {
-      for (const testCase of testCases) {
-        if (testCase.id > 1000000000000) {
-          // Create new test case
-          await createTestCase({
-            questionId: selectedQuestion.id,
-            input: testCase.input,
-            expectedOutput: testCase.expectedOutput,
-            isSample: testCase.isSample,
-          });
-        } else {
-          // Update existing test case
-          await updateTestCase(testCase.id, {
-            questionId: selectedQuestion.id,
-            input: testCase.input,
-            expectedOutput: testCase.expectedOutput,
-            isSample: testCase.isSample,
-          });
-        }
-      }
-      
-      // Reload test cases
-      await loadTestCases(selectedQuestion.id);
-      setSuccessMessage('Test cases saved successfully!');
-      setTimeout(() => setSuccessMessage(null), 3000);
-    } catch (error: any) {
-      alert(error?.message || 'Failed to save test cases');
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
@@ -484,8 +514,6 @@ const ManageContest = () => {
   }
 
   const { contest, admins, questions } = data;
-
-  console.log("Markdown description:", contest.markdownDescription.slice(0, 100));
 
   return (
     <>
@@ -550,12 +578,11 @@ const ManageContest = () => {
       {/* Edit Questions Modal */}
       {isQuestionsModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-7xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden flex flex-col">
             {/* Modal Header */}
             <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-2">
-                  <FileQuestion className="w-6 h-6 text-blue-500" />
                   <span>{selectedQuestion ? 'Edit Question' : 'Create Question'}</span>
                 </h2>
                 <button
@@ -667,74 +694,59 @@ const ManageContest = () => {
                       <p className="text-gray-600">Loading test cases...</p>
                     </div>
                   ) : testCases.length > 0 ? (
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {testCases.map((testCase, index) => (
                         <div
                           key={testCase.id}
-                          className="p-4 bg-gray-50 border border-gray-200 rounded-xl space-y-3"
+                          className="p-4 bg-gradient-to-br from-white to-gray-50 border border-gray-200 rounded-xl hover:shadow-md transition-all"
                         >
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                              <span className="px-2.5 py-1 bg-blue-500 text-white text-xs font-bold rounded-lg">
-                                #{index + 1}
+                            <div className="flex items-center space-x-3 flex-1 min-w-0">
+                              <span className="px-3 py-1.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-xs font-bold rounded-lg shadow-sm">
+                                Test Case #{index + 1}
                               </span>
-                              <label className="flex items-center space-x-2 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={testCase.isSample}
-                                  onChange={(e) => handleTestCaseChange(index, 'isSample', e.target.checked)}
-                                  className="w-4 h-4 text-blue-500 rounded focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
-                                />
-                                <span className="text-sm font-medium text-gray-700">Sample Test Case</span>
-                              </label>
+                              {testCase.isSample && (
+                                <span className="px-2.5 py-1 bg-green-50 text-green-700 text-xs font-semibold rounded-md border border-green-200">
+                                  Sample
+                                </span>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs text-gray-500">
+                                  {testCase.input.substring(0, 50)}{testCase.input.length > 50 ? '...' : ''} → {testCase.expectedOutput.substring(0, 50)}{testCase.expectedOutput.length > 50 ? '...' : ''}
+                                </p>
+                              </div>
                             </div>
-                            <button
-                              onClick={() => handleDeleteTestCase(testCase.id, index)}
-                              className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                              title="Delete test case"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
-                            <div>
-                              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                Input
-                              </label>
-                              <textarea
-                                value={testCase.input}
-                                onChange={(e) => handleTestCaseChange(index, 'input', e.target.value)}
-                                placeholder="Enter input..."
-                                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-mono text-sm"
-                                rows={4}
-                              />
-                            </div>
-                            <div>
-                              <label className="block text-sm font-semibold text-gray-700 mb-1">
-                                Expected Output
-                              </label>
-                              <textarea
-                                value={testCase.expectedOutput}
-                                onChange={(e) => handleTestCaseChange(index, 'expectedOutput', e.target.value)}
-                                placeholder="Enter expected output..."
-                                className="w-full px-3 py-2 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-mono text-sm"
-                                rows={4}
-                              />
+                            <div className="flex items-center space-x-2">
+                              <button
+                                onClick={() => handleOpenTestCaseModal(testCase, index)}
+                                className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                                title="Edit test case"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteTestCase(testCase.id, index)}
+                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                                title="Delete test case"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             </div>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
-                      <FileQuestion className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                      <p className="text-gray-500 mb-4">No test cases added yet</p>
+                    <div className="text-center py-16 bg-gradient-to-br from-gray-50 to-white rounded-xl border-2 border-dashed border-gray-300">
+                      <FileQuestion className="w-20 h-20 text-gray-300 mx-auto mb-4" />
+                      <p className="text-gray-600 font-medium mb-2">No test cases added yet</p>
+                      <p className="text-sm text-gray-500 mb-4">Test cases help validate submissions</p>
                       <button
                         onClick={handleAddTestCase}
-                        className="px-6 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors shadow-sm cursor-pointer"
+                        className="inline-flex items-center space-x-2 px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-all shadow-lg shadow-blue-500/20 cursor-pointer"
                       >
-                        Add Your First Test Case
+                        <Plus className="w-5 h-5" />
+                        <span>Add Your First Test Case</span>
                       </button>
                     </div>
                   )}
@@ -748,10 +760,10 @@ const ManageContest = () => {
                 onClick={() => setIsQuestionsModalOpen(false)}
                 className="px-5 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-medium transition-all cursor-pointer"
               >
-                Cancel
+                {activeTab === 'testcases' ? 'Close' : 'Cancel'}
               </button>
               
-              {activeTab === 'question' ? (
+              {activeTab === 'question' && (
                 <button
                   onClick={handleSaveQuestion}
                   disabled={isSubmitting}
@@ -769,25 +781,116 @@ const ManageContest = () => {
                     </>
                   )}
                 </button>
-              ) : (
-                <button
-                  onClick={handleSaveTestCases}
-                  disabled={isSubmitting}
-                  className="inline-flex items-center space-x-2 px-6 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-medium shadow-lg shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span>Saving Test Cases...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-5 h-5" />
-                      <span>Save Test Cases</span>
-                    </>
-                  )}
-                </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Test Case Modal */}
+      {isTestCaseModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md z-[110] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-gray-900 flex items-center space-x-2">
+                  <span>{selectedTestCase ? 'Edit Test Case' : 'Create Test Case'}</span>
+                </h2>
+                <button
+                  onClick={() => setIsTestCaseModalOpen(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
+                >
+                  <X className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6">
+              <div className="space-y-6">
+                {/* Sample Test Case Toggle */}
+                <div className="flex items-center space-x-3 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                  <input
+                    type="checkbox"
+                    name="isSample"
+                    checked={testCaseFormData.isSample}
+                    onChange={handleTestCaseInputChange}
+                    className="w-5 h-5 text-blue-500 rounded border-gray-300 focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+                  />
+                  <label className="text-sm font-semibold text-gray-700 cursor-pointer">
+                    Mark as Sample Test Case
+                  </label>
+                  <span className="text-xs text-gray-600 ml-auto">
+                    Sample test cases are visible to participants
+                  </span>
+                </div>
+
+                {/* Input */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Input <span className="text-red-500">*</span>
+                  </label>
+                  <Textarea
+                    name="input"
+                    value={testCaseFormData.input}
+                    onChange={handleTestCaseInputChange}
+                    placeholder="Enter test input here..."
+                    className="w-full !px-3 py-3 rounded-2xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-mono text-sm bg-white resize-none"
+                    rows={5}
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    Provide the input that will be passed to the solution
+                  </p>
+                </div>
+
+                {/* Expected Output */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Expected Output <span className="text-red-500">*</span>
+                  </label>
+                  <Textarea
+                    name="expectedOutput"
+                    value={testCaseFormData.expectedOutput}
+                    onChange={handleTestCaseInputChange}
+                    placeholder="Enter expected output here..."
+                    className="w-full !px-3 py-3 rounded-2xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all font-mono text-sm bg-white resize-none"
+                    rows={5}
+                    required
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    Provide the expected output for the given input
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex items-center justify-end space-x-3">
+              <button
+                onClick={() => setIsTestCaseModalOpen(false)}
+                className="px-2.5 py-2.5 rounded-2xl bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 font-medium transition-all cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveTestCaseFromModal}
+                disabled={isSubmitting}
+                className="inline-flex items-center space-x-2 px-6 py-2.5 rounded-xl bg-blue-500 hover:bg-blue-600 text-white font-medium shadow-lg shadow-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-5 h-5" />
+                    <span>{selectedTestCase ? 'Update Test Case' : 'Create Test Case'}</span>
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>
@@ -806,7 +909,6 @@ const ManageContest = () => {
               </button>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900 flex items-center space-x-3">
-                  <Sparkles className="w-8 h-8 text-blue-500" />
                   <span>Manage Contest</span>
                 </h1>
                 <p className="text-gray-600 mt-1">Configure and manage your contest</p>
@@ -837,7 +939,6 @@ const ManageContest = () => {
               <section className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
                 <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white flex items-center justify-between">
                   <h2 className="text-lg font-bold text-gray-900 flex items-center space-x-2">
-                    <ImageIcon className="w-5 h-5 text-blue-500" />
                     <span>Contest Overview</span>
                   </h2>
                   <button
@@ -880,7 +981,6 @@ const ManageContest = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
                         <div className="flex items-center space-x-2 text-blue-600 mb-2">
-                          <Calendar className="w-4 h-4" />
                           <span className="text-sm font-semibold">Start</span>
                         </div>
                         <p className="text-gray-900 font-medium">
@@ -900,7 +1000,6 @@ const ManageContest = () => {
 
                       <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
                         <div className="flex items-center space-x-2 text-blue-600 mb-2">
-                          <Clock className="w-4 h-4" />
                           <span className="text-sm font-semibold">End</span>
                         </div>
                         <p className="text-gray-900 font-medium">
@@ -937,7 +1036,6 @@ const ManageContest = () => {
               <section className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
                 <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white">
                   <h2 className="text-lg font-bold text-gray-900 flex items-center space-x-2">
-                    <Shield className="w-5 h-5 text-blue-500" />
                     <span>Admins ({admins.length})</span>
                   </h2>
                 </div>
@@ -1025,7 +1123,6 @@ const ManageContest = () => {
               <section className="bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm">
                 <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-white flex items-center justify-between">
                   <h2 className="text-lg font-bold text-gray-900 flex items-center space-x-2">
-                    <FileQuestion className="w-5 h-5 text-blue-500" />
                     <span>Questions ({questions.length})</span>
                   </h2>
                   <button 
@@ -1077,7 +1174,6 @@ const ManageContest = () => {
                     </div>
                   ) : (
                     <div className="text-center py-12">
-                      <FileQuestion className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                       <p className="text-gray-500 mb-4">No questions added yet</p>
                       <button 
                         onClick={() => handleOpenQuestionModal()}

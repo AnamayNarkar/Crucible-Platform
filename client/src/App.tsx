@@ -30,7 +30,6 @@ function App() {
 
     useEffect(() => {
         // 4. Set the external reference 
-        console.log("Setting navigator in navigationService");
         setNavigator(navigate);
     }, [navigate]); // Re-run if 'navigate' somehow changes (though rare)
 

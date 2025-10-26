@@ -142,3 +142,8 @@ html, body, #root {
     @apply bg-background text-foreground;
   }
 }
+
+/* Add a more specific selector */
+body .w-textarea:not(:first-child) {
+  padding-left: 0 !important;
+}
