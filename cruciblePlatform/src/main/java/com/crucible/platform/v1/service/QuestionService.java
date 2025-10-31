@@ -5,12 +5,15 @@ import reactor.core.publisher.Mono;
 
 import com.crucible.platform.v1.dto.question.QuestionCreateDTO;
 import com.crucible.platform.v1.dto.question.QuestionUpdateDTO;
+import com.crucible.platform.v1.dto.question.QuestionWithSamplesDto;
+import com.crucible.platform.v1.dto.question.TestCaseDto;
 import com.crucible.platform.v1.entity.Question;
 import com.crucible.platform.v1.exceptions.ForbiddenException;
 import com.crucible.platform.v1.exceptions.NotFoundException;
 import com.crucible.platform.v1.repository.ContestAdminRepository;
 import com.crucible.platform.v1.repository.ContestRepository;
 import com.crucible.platform.v1.repository.QuestionRepository;
+import com.crucible.platform.v1.repository.TestCaseRepository;
 
 import java.time.LocalDateTime;
 
@@ -20,13 +23,16 @@ public class QuestionService {
     private final QuestionRepository questionRepository;
     private final ContestRepository contestRepository;
     private final ContestAdminRepository contestAdminRepository;
+    private final TestCaseRepository testCaseRepository;
 
     public QuestionService(QuestionRepository questionRepository,
                            ContestRepository contestRepository,
-                           ContestAdminRepository contestAdminRepository) {
+                           ContestAdminRepository contestAdminRepository,
+                           TestCaseRepository testCaseRepository) {
         this.questionRepository = questionRepository;
         this.contestRepository = contestRepository;
         this.contestAdminRepository = contestAdminRepository;
+        this.testCaseRepository = testCaseRepository;
     }
 
     public Mono<Question> createQuestion(QuestionCreateDTO questionDTO, Long creatorId) {
@@ -95,6 +101,21 @@ public class QuestionService {
                                         });
                             });
                 });
+    }
+
+    public Mono<QuestionWithSamplesDto> getQuestionWithSamples(Long questionId, Long userId) {
+        return getQuestion(questionId, userId)
+                .flatMap(question -> 
+                    testCaseRepository.findByQuestionIdAndIsSample(questionId, true)
+                        .take(3) // Limit to max 3 sample test cases
+                        .map(testCase -> new TestCaseDto(
+                            testCase.getId(),
+                            testCase.getInput(),
+                            testCase.getExpectedOutput()
+                        ))
+                        .collectList()
+                        .map(sampleTestCases -> new QuestionWithSamplesDto(question, sampleTestCases))
+                );
     }
 
     public Mono<Question> updateQuestion(Long questionId, QuestionUpdateDTO questionDTO, Long userId) {

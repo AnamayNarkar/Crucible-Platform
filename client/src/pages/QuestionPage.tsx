@@ -5,6 +5,7 @@ import { Editor } from '@monaco-editor/react';
 import toast from 'react-hot-toast';
 import type { Question } from '../services/types/questions';
 import { getQuestion, submitForContest, submitForPractice } from '../services/api/question';
+import { sleep } from '@/utils/sleep';
 
 const QuestionPage = () => {
   const { contestId, problemId } = useParams<{ contestId?: string; problemId: string }>();
@@ -99,6 +100,36 @@ const QuestionPage = () => {
               }}
             />
           </div>
+
+          {/* Sample Test Cases Section */}
+          {question.sampleTestCases && question.sampleTestCases.length > 0 && (
+            <div className="mt-8 border-t pt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Sample Test Cases</h3>
+              <div className="space-y-4">
+                {question.sampleTestCases.map((testCase, index) => (
+                  <div key={testCase.id} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                      Example {index + 1}
+                    </h4>
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-xs font-medium text-gray-600 mb-1">Input:</p>
+                        <pre className="text-sm bg-white px-3 py-2 rounded border border-gray-200 overflow-x-auto">
+                          <code className="text-gray-800">{testCase.input.replace(/\\n/g, '\n')}</code>
+                        </pre>
+                      </div>
+                      <div>
+                        <p className="text-xs font-medium text-gray-600 mb-1">Expected Output:</p>
+                        <pre className="text-sm bg-white px-3 py-2 rounded border border-gray-200 overflow-x-auto">
+                          <code className="text-gray-800">{testCase.expectedOutput.replace(/\\n/g, '\n')}</code>
+                        </pre>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -128,7 +159,7 @@ const QuestionPage = () => {
             key={language}
             language={language}
             value={code}
-            theme="vs-dark"
+            theme="light"
             onChange={(value) => setCode(value || '')}
             options={{
               fontSize: 14,
@@ -153,16 +184,18 @@ const QuestionPage = () => {
               },
 
             }}
-            beforeMount={(monaco) => {
-              monaco.editor.defineTheme('custom-dark', {
-                base: 'vs-dark',
+            beforeMount={async (monaco) => {
+              // sleep for 5 ms
+              await sleep(5);
+              monaco.editor.defineTheme('light', {
+                base: 'hc-light',
                 inherit: true,
                 rules: [
                   // Only red squiggly underline for errors, no background
                   { token: 'invalid', foreground: 'ff5555', fontStyle: 'underline wavy' },
                 ],
                 colors: {
-                  'editor.background': '#1e1e1e',
+                  'editor.background': '#ffffff',
                   'editorError.foreground': '#ff5555', // red underline
                   'editorWarning.foreground': '#f1fa8c',
                   'editorInfo.foreground': '#8be9fd',
@@ -171,8 +204,9 @@ const QuestionPage = () => {
               });
               monaco.editor.setTheme('custom-dark');
             }}
-            onMount={(editor) => {
+            onMount={async (editor) => {
               editor.focus();
+              await sleep(5);
               const container = editor.getContainerDomNode();
               container.style.height = '100%';
               container.style.pointerEvents = 'auto';

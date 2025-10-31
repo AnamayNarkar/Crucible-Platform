@@ -17,6 +17,7 @@ import com.crucible.platform.v1.service.QuestionService;
 import com.crucible.platform.v1.dto.ResponseEntity;
 import com.crucible.platform.v1.dto.question.QuestionCreateDTO;
 import com.crucible.platform.v1.dto.question.QuestionUpdateDTO;
+import com.crucible.platform.v1.dto.question.QuestionWithSamplesDto;
 
 @RestController
 @RequestMapping("/api/v1/questions")
@@ -35,9 +36,9 @@ public class QuestionController {
     }
 
     @GetMapping("/{id}")
-    public Mono<ResponseEntity<Question>> getQuestion(@PathVariable Long id, WebSession session) {
+    public Mono<ResponseEntity<QuestionWithSamplesDto>> getQuestion(@PathVariable Long id, WebSession session) {
         Long userId = (Long) session.getAttributes().get("userId");
-        return questionService.getQuestion(id, userId)
+        return questionService.getQuestionWithSamples(id, userId)
                 .map(question -> new ResponseEntity<>(question, "Question fetched successfully"));
     }
 
