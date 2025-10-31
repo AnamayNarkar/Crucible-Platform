@@ -39,6 +39,7 @@ public class QuestionService {
                     questionDTO.getPoints(),
                     creatorId,
                     questionDTO.getContestId(),
+                    false,
                     LocalDateTime.now(),
                     LocalDateTime.now()
             );
@@ -69,9 +70,15 @@ public class QuestionService {
         return questionRepository.findById(questionId)
                 .switchIfEmpty(Mono.error(new NotFoundException("Question not found")))
                 .flatMap(question -> {
+                    if (question.getIsPublic()) {
+                        return Mono.just(question);
+                    }
                     return contestRepository.findById(question.getContestId())
                             .switchIfEmpty(Mono.error(new NotFoundException("Contest not found")))
                             .flatMap(contest -> {
+                                if (LocalDateTime.now().isAfter(contest.getStartTime())) {
+                                    return Mono.just(question);
+                                }
                                 if (contest.getCreatorId().equals(userId)) {
                                     return Mono.just(question);
                                 }

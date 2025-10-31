@@ -11,9 +11,11 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.server.WebSession;
 
 import com.crucible.platform.v1.dto.ResponseEntity;
+import com.crucible.platform.v1.dto.contest.ContestDetailsForUser;
 import com.crucible.platform.v1.dto.contest.CreateContest;
 import com.crucible.platform.v1.dto.contest.UpdateContest;
 import com.crucible.platform.v1.dto.contest.ManageContestResponse;
+import com.crucible.platform.v1.dto.contest.ContestQuestionsResponse;
 import com.crucible.platform.v1.entity.Contest;
 import com.crucible.platform.v1.service.ContestService;
 
@@ -72,6 +74,24 @@ public class ContestController {
   public Mono<ResponseEntity<Void>> deleteContest(WebSession session, @PathVariable Long contestId) {
     Long userId = (Long) session.getAttributes().get("userId");
     return contestService.deleteContest(contestId, userId);
+  }
+
+  @GetMapping("/{contestId}")
+  public Mono<ResponseEntity<ContestDetailsForUser>> getContestById(WebSession session, @PathVariable Long contestId) {
+    Long userId = (Long) session.getAttributes().get("userId");
+    return contestService.getContestById(userId, contestId);
+  }
+
+  @GetMapping("/{contestId}/questions")
+  public Mono<ResponseEntity<ContestQuestionsResponse>> getContestQuestions(WebSession session, @PathVariable Long contestId) {
+    Long userId = (Long) session.getAttributes().get("userId");
+    return contestService.getContestQuestions(contestId, userId);
+  }
+
+  @PostMapping("/{contestId}/participate")
+  public Mono<ResponseEntity<Void>> participateInContest(WebSession session, @PathVariable Long contestId) {
+    Long userId = (Long) session.getAttributes().get("userId");
+    return contestService.participateInContest(contestId, userId);
   }
 
 }

@@ -27,6 +27,7 @@ CREATE TABLE questions (
     creator_id BIGINT REFERENCES users(id) ON DELETE SET NULL,
     contest_id BIGINT REFERENCES contests(id) ON DELETE CASCADE,
     points INTEGER,
+    is_public BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -86,39 +87,58 @@ INSERT INTO users (username, email, hashed_password, roles) VALUES
 INSERT INTO users (username, email, hashed_password, roles) VALUES
 ('anamaynarkar', 'anamay.narkar.17@gmail.com', '$2a$10$WlB2GgS6WhZSEHoXKJjGF.1d6B.OyHuEB45kJ/DD9nRyUTcuXoggC', ARRAY['USER']);
 
--- Seed Contests (assuming current date is ~2025-10-25)
+-- Seed Contests (using relative dates based on CURRENT_TIMESTAMP)
 -- Note: We use a subquery to robustly find the creator's ID.
 
--- Past Contest
+-- Past Contest (ended 3 days ago, 3-hour duration)
 INSERT INTO contests (name, banner_image_url, card_description, markdown_description, creator_id, start_time, end_time) VALUES
 ('CodeSprint 2024',
 'https://images.unsplash.com/photo-1587620962725-abab7fe55159?w=800',
 'A look back at our first major coding challenge of 2024.',
 E'# CodeSprint 2024\n\nThis was a 3-hour challenge focusing on dynamic programming. Congratulations to the winners!',
 (SELECT id FROM users WHERE username = 'anamaynarkar'),
-'2024-10-01 12:00:00',
-'2024-10-01 15:00:00');
+CURRENT_TIMESTAMP - INTERVAL '3 days' - INTERVAL '3 hours',
+CURRENT_TIMESTAMP - INTERVAL '3 days');
 
--- Ongoing Contest
+-- Ongoing Contest (started 1 hour ago, 24-hour duration)
 INSERT INTO contests (name, banner_image_url, card_description, markdown_description, creator_id, start_time, end_time) VALUES
 ('Weekend Warrior II',
 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800',
 'Live now! Solve 5 challenging problems in 24 hours.',
 E'# Weekend Warrior II\n\nThe challenge is live. Submissions are open. Good luck!',
 (SELECT id FROM users WHERE username = 'anamaynarkar'),
-'2025-10-25 12:00:00',
-'2025-10-26 12:00:00');
+CURRENT_TIMESTAMP - INTERVAL '1 hour',
+CURRENT_TIMESTAMP + INTERVAL '23 hours');
 
--- Upcoming Contest
+-- Upcoming Contest (starts in 2 days, 13-hour duration)
 INSERT INTO contests (name, banner_image_url, card_description, markdown_description, creator_id, start_time, end_time) VALUES
 ('AlgoMania 2026',
 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800',
 'Get ready for the first major challenge of 2026. Registration opens soon!',
 E'# AlgoMania 2026\n\nPrepare your algorithms for a 3-hour sprint. More details to be announced.',
 (SELECT id FROM users WHERE username = 'anamaynarkar'),
-'2026-01-15 09:00:00',
-'2026-01-15 12:00:00');
+CURRENT_TIMESTAMP + INTERVAL '2 days',
+CURRENT_TIMESTAMP + INTERVAL '2 days' + INTERVAL '13 hours');
 
+-- Add Two Sum problem to ongoing contest
+INSERT INTO questions (title, markdown_description, creator_id, contest_id, points, is_public) VALUES
+('Two Sum',
+E'# Two Sum\n\nGiven an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.\n\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.\n\nYou can return the answer in any order.\n\n## Input Format\n\nThe first line contains the integer `target`.\n\nThe second line contains space-separated integers representing the array `nums`.\n\n## Output Format\n\nOutput two space-separated integers representing the indices of the two numbers that add up to the target.\n\n## Constraints\n\n- `2 <= nums.length <= 10^4`\n- `-10^9 <= nums[i] <= 10^9`\n- `-10^9 <= target <= 10^9`\n- Only one valid answer exists.',
+(SELECT id FROM users WHERE username = 'anamaynarkar'),
+(SELECT id FROM contests WHERE name = 'Weekend Warrior II'),
+100,
+FALSE
+);
+
+-- Test cases for Two Sum
+INSERT INTO test_cases (question_id, input, expected_output, is_sample) VALUES
+((SELECT id FROM questions WHERE title = 'Two Sum'), '9\n2 7 11 15', '0 1', TRUE),
+((SELECT id FROM questions WHERE title = 'Two Sum'), '6\n3 2 4', '1 2', TRUE),
+((SELECT id FROM questions WHERE title = 'Two Sum'), '10\n1 3 5 7 9', '1 3', FALSE),
+((SELECT id FROM questions WHERE title = 'Two Sum'), '-5\n-1 -2 -3 -4 -5 -6', '2 4', FALSE);
+
+-- INSERT INTO user_contests (user_id, contest_id) VALUES
+-- ((SELECT id FROM users WHERE username = 'user1'), (SELECT id FROM contests WHERE name = 'Weekend Warrior II'));
 
 -- ---
 -- INDEXES
@@ -141,4 +161,4 @@ DO $$
 BEGIN
     RAISE NOTICE 'PostgreSQL migration loaded.';
 END
-$$;
+$$ LANGUAGE plpgsql;

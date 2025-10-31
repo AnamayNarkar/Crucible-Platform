@@ -76,7 +76,8 @@ public class SecurityConfig {
                 "/api/v1/auth/register", // Your custom controller
                 "/api/v1/contests/live",
                 "/api/v1/contests/upcoming",
-                "/api/v1/contests/past"
+                "/api/v1/contests/past",
+                "/api/v1/contests/{contestId}"
             ).permitAll()
             .anyExchange().authenticated())
         .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(entryPoint))

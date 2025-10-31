@@ -24,6 +24,7 @@ public class Question {
     private Integer points;
     private Long creatorId;
     private Long contestId;
+    private Boolean isPublic;
 
     @CreatedDate
     private LocalDateTime createdAt;
