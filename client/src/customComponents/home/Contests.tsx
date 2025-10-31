@@ -9,12 +9,9 @@ import {
   Calendar,
   Clock,
   Users,
-  Plus,
   PlayCircle,
   CalendarClock,
   History,
-  Sparkles,
-  Award,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Contest } from '../../services/types';
@@ -49,16 +46,6 @@ const ContestCard = ({ contest, type = 'default', onButtonClick }: { contest: Co
           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
-
-        {/* Badge for user's own contest */}
-        {type === 'user' && (
-          <div className="absolute top-3 right-3">
-            <span className="flex items-center space-x-1.5 px-3 py-1 bg-blue-500/90 backdrop-blur-sm text-white text-xs font-semibold rounded-full shadow-lg">
-              <Award className="w-3.5 h-3.5" />
-              <span>Your Contest</span>
-            </span>
-          </div>
-        )}
 
         {/* Contest Name Overlay */}
         <div className="absolute bottom-4 left-4 right-4">
@@ -280,7 +267,7 @@ const Contests = () => {
                   'opacity-70 hover:opacity-100 grayscale hover:grayscale-0 transition-all duration-300'
               )}
             >
-              <ContestCard contest={contest} />
+              <ContestCard contest={contest} onButtonClick={() => navigate(`/contests/${contest.id}`)} />
             </div>
           </div>
         ))}
@@ -330,38 +317,24 @@ const Contests = () => {
             </p>
           </div>
           <button className=" z-25 inline-flex items-center space-x-2 px-6 py-3 mt-4 md:mt-0 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold shadow-lg shadow-blue-500/40 transform hover:scale-105 transition-all duration-300 cursor-pointer" onClick={() => navigate('/contests/create')}>
-            <Plus className="w-5 h-5" />
             <span>Create New Contest</span>
           </button>
         </div>
 
         <div className="space-y-16">
-          {/* Your Contests Section - Only show if authenticated */}
-          {isAuthenticated && (
+          {/* Your Contests Section - Only show if authenticated and has contests */}
+          {isAuthenticated && userContests.length > 0 && (
             <section>
               <div className="text-center mb-8">
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">Your Contests</h2>
                 <p className="text-md text-gray-600">Contests you created or manage</p>
               </div>
 
-              {userContests.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                  {userContests.map((contest) => (
-                    <ContestCard key={contest.id} contest={contest} type="user" onButtonClick={() => navigate(`/contests/manage/${contest.id}`)} />
-                  ))}
-                </div>
-              ) : (
-                <EmptyState
-                  icon={Sparkles}
-                  title="No Contests Yet"
-                  message="Create your first contest and start challenging others!"
-                >
-                  <button className="inline-flex items-center space-x-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-medium shadow-lg shadow-blue-500/30 transform hover:scale-105 transition-all cursor-pointer" onClick={() => navigate('/contests/create')}>
-                    <Plus className="w-5 h-5" />
-                    <span>Create Your First Contest</span>
-                  </button>
-                </EmptyState>
-              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                {userContests.map((contest) => (
+                  <ContestCard key={contest.id} contest={contest} type="user" onButtonClick={() => navigate(`/contests/manage/${contest.id}`)} />
+                ))}
+              </div>
             </section>
           )}
 

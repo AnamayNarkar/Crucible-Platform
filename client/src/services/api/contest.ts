@@ -1,6 +1,6 @@
 import axiosInstance from "./axiosInstance";
 import { handleApiError } from "./errorHandling";
-import type { Contest } from "../types/contest";
+import type { Contest, ContestDetailsForUser, ContestQuestionsResponse } from "../types/contest";
 import type { ManageContestResponse } from "../types/manageContest";
 
 export interface CreateContestPayload {
@@ -133,12 +133,29 @@ export async function getUserContests(): Promise<Contest[] | null> {
  * Get a single contest by ID
  * @param contestId - The contest ID
  */
-export async function getContestById(contestId: number): Promise<Contest | null> {
+export async function getContestById(contestId: number): Promise<ContestDetailsForUser | null> {
   try {
     const response = await axiosInstance.get(`/contests/${contestId}`);
-    return response.data as Contest;
+    return response.data.data as ContestDetailsForUser;
   } catch (error: any) {
     const result = handleApiError(error, 'Failed to fetch contest');
+    if (result && 'isServerDown' in result) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Get contest questions for participants
+ * @param contestId - The contest ID
+ */
+export async function getContestQuestions(contestId: number): Promise<ContestQuestionsResponse | null> {
+  try {
+    const response = await axiosInstance.get(`/contests/${contestId}/questions`);
+    return response.data.data as ContestQuestionsResponse;
+  } catch (error: any) {
+    const result = handleApiError(error, 'Failed to fetch contest questions');
     if (result && 'isServerDown' in result) {
       return null;
     }
@@ -179,6 +196,23 @@ export async function deleteContest(contestId: number): Promise<boolean> {
     const result = handleApiError(error, 'Failed to delete contest');
     if (result && 'isServerDown' in result) {
       return false;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Participate in a contest
+ * @param contestId - The contest ID
+ */
+export async function participateInContest(contestId: number): Promise<{ message: string } | null> {
+  try {
+    const response = await axiosInstance.post(`/contests/${contestId}/participate`);
+    return response.data;
+  } catch (error: any) {
+    const result = handleApiError(error, 'Failed to participate in contest');
+    if (result && 'isServerDown' in result) {
+      return null;
     }
     throw error;
   }

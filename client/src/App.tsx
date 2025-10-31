@@ -16,6 +16,9 @@ import ManageContest from './customComponents/home/ManageContest';
 import { useNavigate } from 'react-router-dom';
 import { setNavigator } from './services/navigationService';
 import NotFound from './customComponents/global/errors/NotFound';
+import ContestVisit from './pages/ContestVisit';
+import ContestIn from './pages/ContestIn';
+import QuestionPage from './pages/QuestionPage';
 
 function App() {
   const dispatch = useDispatch<AppDispatch>();
@@ -41,8 +44,12 @@ function App() {
       <Route path="/leaderboard" element={<DashboardLayout children={<Leaderboard />} />} />
       <Route path="/contests/create" element={<ProtectedRoute element={<DashboardLayout children={<CreateContest />} />} />} />
       <Route path="/contests/manage/:contestId" element={<ProtectedRoute element={<DashboardLayout children={<ManageContest />} />} />} />
+      <Route path="/contests/:contestId/in" element={<ProtectedRoute element={<DashboardLayout children={<ContestIn />} />} />} />
+      <Route path="/contests/:contestId/problem/:problemId" element={<ProtectedRoute element={<DashboardLayout children={<QuestionPage />} />} />} />
+      <Route path="/problems/:problemId" element={<ProtectedRoute element={<DashboardLayout children={<QuestionPage />} />} />} />
       <Route path="/auth" element={<AuthPage />} />
       <Route path="/server-down" element={<ServerDownPage />} />
+      <Route path="/contests/:contestId" element={<DashboardLayout children={<ContestVisit />} />} />
       <Route path="*" element={<DashboardLayout children={<NotFound />} />} />
     </Routes>
   );

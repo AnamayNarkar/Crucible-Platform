@@ -1,3 +1,5 @@
+import {type Question } from './questions';
+
 export interface Contest {
   id: number;
   name: string;
@@ -7,17 +9,6 @@ export interface Contest {
   creatorId: number;
   startTime: string;
   endTime: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface Question {
-  id: number;
-  creatorId: number;
-  contestId: number;
-  title: string;
-  markdownDescription: string;
-  points: number;
   createdAt: string;
   updatedAt: string;
 }

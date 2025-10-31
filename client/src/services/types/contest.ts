@@ -11,6 +11,23 @@ export interface Contest {
   updatedAt: string;
 }
 
+export interface ContestDetailsForUser extends Contest {
+  hasUserParticipated: boolean;
+}
+
+export interface ContestQuestion {
+  id: number;
+  title: string;
+  points: number;
+}
+
+export interface ContestQuestionsResponse {
+  contestId: number;
+  contestName: string;
+  hasParticipated: boolean;
+  questions: ContestQuestion[];
+}
+
 export interface ContestsState {
   userContests: Contest[];
   ongoingContests: Contest[];
