@@ -21,6 +21,7 @@ public class Submission {
 
     private Long userId;
     private Long questionId;
+    private Long contestId; // Optional field because not all submissions are part of a contest - can be null
     
     private String code;
     private String language;

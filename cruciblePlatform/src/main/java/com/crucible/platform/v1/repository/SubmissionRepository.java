@@ -12,4 +12,6 @@ public interface SubmissionRepository extends ReactiveCrudRepository<Submission,
     Flux<Submission> findByQuestionId(Long questionId);
     Flux<Submission> findByUserIdAndQuestionId(Long userId, Long questionId);
     Flux<Submission> findByStatus(String status);
+    Flux<Submission> findByUserIdAndQuestionIdAndContestId(Long userId, Long questionId, Long contestId);
+    Flux<Submission> findByUserIdAndContestId(Long userId, Long contestId);
 }

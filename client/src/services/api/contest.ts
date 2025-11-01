@@ -1,6 +1,6 @@
 import axiosInstance from "./axiosInstance";
 import { handleApiError } from "./errorHandling";
-import type { Contest, ContestDetailsForUser, ContestQuestionsResponse } from "../types/contest";
+import type { Contest, ContestDetailsForUser, ContestQuestionsResponse, ContestLeaderboardResponse } from "../types/contest";
 import type { ManageContestResponse } from "../types/manageContest";
 
 export interface CreateContestPayload {
@@ -211,6 +211,23 @@ export async function participateInContest(contestId: number): Promise<{ message
     return response.data;
   } catch (error: any) {
     const result = handleApiError(error, 'Failed to participate in contest');
+    if (result && 'isServerDown' in result) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Get contest leaderboard
+ * @param contestId - The contest ID
+ */
+export async function getContestLeaderboard(contestId: number): Promise<ContestLeaderboardResponse | null> {
+  try {
+    const response = await axiosInstance.get(`/contests/${contestId}/leaderboard`);
+    return response.data.data;
+  } catch (error: any) {
+    const result = handleApiError(error, 'Failed to fetch contest leaderboard');
     if (result && 'isServerDown' in result) {
       return null;
     }

@@ -19,6 +19,8 @@ export interface ContestQuestion {
   id: number;
   title: string;
   points: number;
+  hasAttempted: boolean;
+  hasSolved: boolean;
 }
 
 export interface ContestQuestionsResponse {
@@ -26,6 +28,20 @@ export interface ContestQuestionsResponse {
   contestName: string;
   hasParticipated: boolean;
   questions: ContestQuestion[];
+}
+
+export interface LeaderboardEntry {
+  userId: number;
+  username: string;
+  totalScore: number;
+  solvedProblems: number;
+  rank: number;
+}
+
+export interface ContestLeaderboardResponse {
+  contestId: number;
+  contestName: string;
+  leaderboard: LeaderboardEntry[];
 }
 
 export interface ContestsState {

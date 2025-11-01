@@ -1,4 +1,3 @@
--- V1__create_users_table.sql
 CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
     username VARCHAR(255) UNIQUE NOT NULL,
@@ -36,6 +35,7 @@ CREATE TABLE submissions (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
     question_id BIGINT REFERENCES questions(id) ON DELETE CASCADE,
+    contest_id BIGINT REFERENCES contests(id) ON DELETE CASCADE,
     code TEXT NOT NULL,
     language VARCHAR(50) NOT NULL,
     status VARCHAR(50) NOT NULL,
@@ -123,7 +123,44 @@ CURRENT_TIMESTAMP + INTERVAL '2 days' + INTERVAL '13 hours');
 -- Add Two Sum problem to ongoing contest
 INSERT INTO questions (title, markdown_description, creator_id, contest_id, points, is_public) VALUES
 ('Two Sum',
-E'# Two Sum\n\nGiven an array of integers `nums` and an integer `target`, return indices of the two numbers such that they add up to `target`.\n\nYou may assume that each input would have exactly one solution, and you may not use the same element twice.\n\nYou can return the answer in any order.\n\n## Input Format\n\nThe first line contains the integer `target`.\n\nThe second line contains space-separated integers representing the array `nums`.\n\n## Output Format\n\nOutput two space-separated integers representing the indices of the two numbers that add up to the target.\n\n## Constraints\n\n- `2 <= nums.length <= 10^4`\n- `-10^9 <= nums[i] <= 10^9`\n- `-10^9 <= target <= 10^9`\n- Only one valid answer exists.',
+E'# Two Sum
+
+Given an array of integers `nums` and an integer `target`, return the **indices of the first pair** of numbers (in increasing index order) such that they add up to `target`.
+
+You may assume that each input would have exactly one such pair according to this rule, and you may not use the same element twice.
+
+## Input Format
+
+- The first line contains two integers `N` and `target`, where `N` is the size of the array.
+- The second line contains `N` space-separated integers representing the array `nums`.
+
+## Output Format
+
+Output two space-separated integers representing the **indices of the first pair (i, j)** (`i < j`) such that `nums[i] + `nums[j] == target`.
+
+## Constraints
+
+- `2 <= nums.length <= 10^4`
+- `-10^9 <= nums[i] <= 10^9`
+- `-10^9 <= target <= 10^9`
+- Only one valid answer exists based on the rule of the first pair (in index order).
+
+## Example
+
+**Input**
+
+```
+4 9
+2 7 11 15
+```
+
+**Output**
+
+```
+0 1
+```
+
+',
 (SELECT id FROM users WHERE username = 'anamaynarkar'),
 (SELECT id FROM contests WHERE name = 'Weekend Warrior II'),
 100,
@@ -131,11 +168,14 @@ FALSE
 );
 
 -- Test cases for Two Sum
+-- Test cases for Two Sum
 INSERT INTO test_cases (question_id, input, expected_output, is_sample) VALUES
-((SELECT id FROM questions WHERE title = 'Two Sum'), '9\n2 7 11 15', '0 1', TRUE),
-((SELECT id FROM questions WHERE title = 'Two Sum'), '6\n3 2 4', '1 2', TRUE),
-((SELECT id FROM questions WHERE title = 'Two Sum'), '10\n1 3 5 7 9', '1 3', FALSE),
-((SELECT id FROM questions WHERE title = 'Two Sum'), '-5\n-1 -2 -3 -4 -5 -6', '2 4', FALSE);
+((SELECT id FROM questions WHERE title = 'Two Sum'), E'4 9\n2 7 11 15', '0 1', TRUE),
+((SELECT id FROM questions WHERE title = 'Two Sum'), E'3 6\n3 2 4', '1 2', TRUE),
+((SELECT id FROM questions WHERE title = 'Two Sum'), E'5 10\n1 3 5 7 9', '1 3', FALSE),
+-- FIXED: The target here was -5, which incorrectly yields '1 2'.
+-- The expected output '2 4' corresponds to a target of -8.
+((SELECT id FROM questions WHERE title = 'Two Sum'), E'6 -8\n-1 -2 -3 -4 -5 -6', '2 4', FALSE);
 
 -- INSERT INTO user_contests (user_id, contest_id) VALUES
 -- ((SELECT id FROM users WHERE username = 'user1'), (SELECT id FROM contests WHERE name = 'Weekend Warrior II'));

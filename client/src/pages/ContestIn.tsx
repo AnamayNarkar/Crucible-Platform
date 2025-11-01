@@ -1,24 +1,16 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { getContestQuestions, participateInContest } from '../services/api/contest';
-import type { ContestQuestionsResponse } from '../services/types/contest';
+import { getContestQuestions, participateInContest, getContestLeaderboard } from '../services/api/contest';
+import type { ContestQuestionsResponse, LeaderboardEntry } from '../services/types/contest';
 
 const ContestIn = () => {
   const { contestId } = useParams<{ contestId: string }>();
   const navigate = useNavigate();
   const [contestData, setContestData] = useState<ContestQuestionsResponse | null>(null);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [participating, setParticipating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // Static leaderboard data (will be replaced with real data later)
-  const staticLeaderboard = [
-    { rank: 1, username: 'CodeMaster', score: 450, solved: 5 },
-    { rank: 2, username: 'AlgoExpert', score: 420, solved: 5 },
-    { rank: 3, username: 'DevNinja', score: 380, solved: 4 },
-    { rank: 4, username: 'ByteWizard', score: 350, solved: 4 },
-    { rank: 5, username: 'CodeWarrior', score: 320, solved: 3 },
-  ];
 
   useEffect(() => {
     const fetchContestData = async () => {
@@ -29,6 +21,10 @@ const ContestIn = () => {
         const data = await getContestQuestions(parseInt(contestId));
         if (data) {
           setContestData(data);
+          // Fetch leaderboard if user has participated
+          if (data.hasParticipated) {
+            await fetchLeaderboard();
+          }
         } else {
           setError('Failed to load contest data');
         }
@@ -43,6 +39,19 @@ const ContestIn = () => {
     fetchContestData();
   }, [contestId]);
 
+  const fetchLeaderboard = async () => {
+    if (!contestId) return;
+    
+    try {
+      const data = await getContestLeaderboard(parseInt(contestId));
+      if (data) {
+        setLeaderboard(data.leaderboard);
+      }
+    } catch (err) {
+      console.error('Failed to fetch leaderboard:', err);
+    }
+  };
+
   const handleParticipate = async () => {
     if (!contestId) return;
     
@@ -54,6 +63,8 @@ const ContestIn = () => {
         const data = await getContestQuestions(parseInt(contestId));
         if (data) {
           setContestData(data);
+          // Fetch leaderboard after participation
+          await fetchLeaderboard();
         }
       }
     } catch (err) {
@@ -151,6 +162,22 @@ const ContestIn = () => {
                         </div>
                       </div>
                       <div className="flex items-center space-x-4 ml-4">
+                        {question.hasSolved && (
+                          <div className="flex items-center space-x-1">
+                            <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                            </svg>
+                            <span className="text-xs font-medium text-green-600 dark:text-green-400">Solved</span>
+                          </div>
+                        )}
+                        {question.hasAttempted && !question.hasSolved && (
+                          <div className="flex items-center space-x-1">
+                            <svg className="w-5 h-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                            </svg>
+                            <span className="text-xs font-medium text-yellow-600 dark:text-yellow-400">Attempted</span>
+                          </div>
+                        )}
                         <div className="flex items-center space-x-2">
                           <span className="text-sm font-medium text-blue-600 dark:text-blue-400">{question.points}</span>
                           <span className="text-xs text-gray-500 dark:text-gray-400">pts</span>
@@ -167,39 +194,64 @@ const ContestIn = () => {
         {/* Right Side - Leaderboard */}
         <div className="lg:col-span-1">
           <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden sticky top-8">
-            <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+            <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Leaderboard</h2>
+              {contestData?.hasParticipated && (
+                <button
+                  onClick={fetchLeaderboard}
+                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                  title="Refresh leaderboard"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                </button>
+              )}
             </div>
             
             <div className="divide-y divide-gray-100 dark:divide-gray-800">
-              {staticLeaderboard.map((participant) => (
-                <div
-                  key={participant.rank}
-                  className="px-6 py-4"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
-                      participant.rank === 1 
-                        ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-700 dark:text-yellow-100' 
-                        : participant.rank === 2 
-                        ? 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-100'
-                        : participant.rank === 3
-                        ? 'bg-orange-100 text-orange-700 dark:bg-orange-700 dark:text-orange-100'
-                        : 'bg-gray-100 text-gray-600 dark:text-gray-700 dark:text-gray-200'
-                    }`}>
-                      {participant.rank}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                        {participant.username}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-gray-900 dark:text-white">{participant.score}</p>
+              {!contestData?.hasParticipated ? (
+                <div className="px-6 py-12 text-center">
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">Participate in the contest to view the leaderboard</p>
+                </div>
+              ) : leaderboard.length === 0 ? (
+                <div className="px-6 py-12 text-center">
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">No submissions yet</p>
+                </div>
+              ) : (
+                leaderboard.map((participant) => (
+                  <div
+                    key={participant.userId}
+                    className="px-6 py-4"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                        participant.rank === 1 
+                          ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-700 dark:text-yellow-100' 
+                          : participant.rank === 2 
+                          ? 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-100'
+                          : participant.rank === 3
+                          ? 'bg-orange-100 text-orange-700 dark:bg-orange-700 dark:text-orange-100'
+                          : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                      }`}>
+                        {participant.rank}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          {participant.username}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {participant.solvedProblems} solved
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{participant.totalScore}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">pts</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
         </div>

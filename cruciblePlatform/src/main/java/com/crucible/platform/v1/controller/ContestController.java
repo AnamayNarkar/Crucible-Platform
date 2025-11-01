@@ -16,6 +16,7 @@ import com.crucible.platform.v1.dto.contest.CreateContest;
 import com.crucible.platform.v1.dto.contest.UpdateContest;
 import com.crucible.platform.v1.dto.contest.ManageContestResponse;
 import com.crucible.platform.v1.dto.contest.ContestQuestionsResponse;
+import com.crucible.platform.v1.dto.contest.ContestLeaderboardResponse;
 import com.crucible.platform.v1.entity.Contest;
 import com.crucible.platform.v1.service.ContestService;
 
@@ -92,6 +93,12 @@ public class ContestController {
   public Mono<ResponseEntity<Void>> participateInContest(WebSession session, @PathVariable Long contestId) {
     Long userId = (Long) session.getAttributes().get("userId");
     return contestService.participateInContest(contestId, userId);
+  }
+
+  @GetMapping("/{contestId}/leaderboard")
+  public Mono<ResponseEntity<ContestLeaderboardResponse>> getContestLeaderboard(WebSession session, @PathVariable Long contestId) {
+    Long userId = (Long) session.getAttributes().get("userId");
+    return contestService.getContestLeaderboard(contestId, userId);
   }
 
 }
