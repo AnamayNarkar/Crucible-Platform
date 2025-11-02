@@ -1,5 +1,7 @@
 package com.crucible.platform.v1.controller;
 
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,6 +23,7 @@ import com.crucible.platform.v1.entity.Contest;
 import com.crucible.platform.v1.service.ContestService;
 
 import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 import java.util.List;
 
 @RestController
@@ -99,6 +102,15 @@ public class ContestController {
   public Mono<ResponseEntity<ContestLeaderboardResponse>> getContestLeaderboard(WebSession session, @PathVariable Long contestId) {
     Long userId = (Long) session.getAttributes().get("userId");
     return contestService.getContestLeaderboard(contestId, userId);
+  }
+
+  @GetMapping(value = "/{contestId}/leaderboard/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+  public Flux<ServerSentEvent<ContestLeaderboardResponse>> streamContestLeaderboard(WebSession session, @PathVariable Long contestId) {
+    Long userId = (Long) session.getAttributes().get("userId");
+    return contestService.streamLeaderboard(contestId, userId)
+        .map(leaderboard -> ServerSentEvent.<ContestLeaderboardResponse>builder(leaderboard)
+            .event("leaderboard")
+            .build());
   }
 
 }

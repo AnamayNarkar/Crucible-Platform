@@ -45,17 +45,19 @@ public class ContestService {
   private final UserRepository userRepository;
   private final UserContestRepository userContestRepository;
   private final SubmissionRepository submissionRepository;
+  private final LeaderboardSseService leaderboardSseService;
 
   public ContestService(ContestRepository contestRepository,
       ContestAdminRepository contestAdminRepository, QuestionRepository questionRepository,
       UserRepository userRepository, UserContestRepository userContestRepository,
-      SubmissionRepository submissionRepository) {
+      SubmissionRepository submissionRepository, LeaderboardSseService leaderboardSseService) {
     this.contestAdminRepository = contestAdminRepository;
     this.contestRepository = contestRepository;
     this.questionRepository = questionRepository;
     this.userRepository = userRepository;
     this.userContestRepository = userContestRepository;
     this.submissionRepository = submissionRepository;
+    this.leaderboardSseService = leaderboardSseService;
   }
 
   public Mono<ResponseEntity<ManageContestResponse>> getContestForManagement(Long contestId, Long userId) {
@@ -382,92 +384,123 @@ public class ContestService {
     // Verify contest exists
     return contestRepository.findById(contestId)
         .switchIfEmpty(Mono.error(new NotFoundException("Contest not found")))
+        .flatMap(contest -> requireParticipation(contestId, userId)
+            .then(computeLeaderboard(contestId))
+            .map(response -> new ResponseEntity<>(response, "Leaderboard retrieved successfully")));
+  }
+
+  /**
+   * Streams live leaderboard updates for a contest over SSE. Emits the current standings
+   * immediately, then every subsequent update pushed after an accepted submission.
+   */
+  public Flux<ContestLeaderboardResponse> streamLeaderboard(Long contestId, Long userId) {
+    return contestRepository.findById(contestId)
+        .switchIfEmpty(Mono.error(new NotFoundException("Contest not found")))
+        .flatMap(contest -> requireParticipation(contestId, userId))
+        .then(refreshAndBroadcastLeaderboard(contestId))
+        .thenMany(leaderboardSseService.subscribe(contestId));
+  }
+
+  /**
+   * Recomputes the leaderboard for a contest and pushes it to all connected SSE subscribers.
+   */
+  public Mono<Void> refreshAndBroadcastLeaderboard(Long contestId) {
+    return computeLeaderboard(contestId)
+        .doOnNext(response -> leaderboardSseService.publish(contestId, response))
+        .then();
+  }
+
+  private Mono<Void> requireParticipation(Long contestId, Long userId) {
+    return userContestRepository.findByUserIdAndContestId(userId, contestId)
+        .hasElement()
+        .flatMap(hasParticipated -> {
+          if (!hasParticipated) {
+            return Mono.error(new ForbiddenException("You must participate in the contest to view the leaderboard"));
+          }
+          return Mono.empty();
+        });
+  }
+
+  private Mono<ContestLeaderboardResponse> computeLeaderboard(Long contestId) {
+    return contestRepository.findById(contestId)
+        .switchIfEmpty(Mono.error(new NotFoundException("Contest not found")))
         .flatMap(contest -> {
-          // Check if user has participated
-          return userContestRepository.findByUserIdAndContestId(userId, contestId)
-              .hasElement()
-              .flatMap(hasParticipated -> {
-                if (!hasParticipated) {
-                  return Mono.error(new ForbiddenException("You must participate in the contest to view the leaderboard"));
-                }
-
-                // Fetch all participants for this contest
-                return userContestRepository.findByContestId(contestId)
+          // Fetch all participants for this contest
+          return userContestRepository.findByContestId(contestId)
+              .collectList()
+              .flatMap(participants -> {
+                // Get all questions for the contest
+                return questionRepository.findByContestId(contestId)
                     .collectList()
-                    .flatMap(participants -> {
-                      // Get all questions for the contest
-                      return questionRepository.findByContestId(contestId)
-                          .collectList()
-                          .flatMap(questions -> {
-                            // Create a map of questionId -> points
-                            Map<Long, Integer> questionPointsMap = new HashMap<>();
-                            for (Question q : questions) {
-                              questionPointsMap.put(q.getId(), q.getPoints());
-                            }
+                    .flatMap(questions -> {
+                      // Create a map of questionId -> points
+                      Map<Long, Integer> questionPointsMap = new HashMap<>();
+                      for (Question q : questions) {
+                        questionPointsMap.put(q.getId(), q.getPoints());
+                      }
 
-                            // For each participant, calculate their score
-                            return Flux.fromIterable(participants)
-                                .flatMap(participant -> {
-                                  Long participantUserId = participant.getUserId();
-                                  
-                                  // Get all accepted submissions for this user in this contest
-                                  return submissionRepository.findByUserIdAndContestId(participantUserId, contestId)
-                                      .filter(submission -> "Accepted".equals(submission.getStatus()))
-                                      .collectList()
-                                      .flatMap(submissions -> {
-                                        // Group by questionId to get unique solved questions
-                                        Map<Long, Submission> solvedQuestionsMap = new HashMap<>();
-                                        for (Submission sub : submissions) {
-                                          solvedQuestionsMap.putIfAbsent(sub.getQuestionId(), sub);
-                                        }
+                      // For each participant, calculate their score
+                      return Flux.fromIterable(participants)
+                          .flatMap(participant -> {
+                            Long participantUserId = participant.getUserId();
 
-                                        // Calculate total score
-                                        final int[] totalScoreHolder = {0};
-                                        for (Long questionId : solvedQuestionsMap.keySet()) {
-                                          totalScoreHolder[0] += questionPointsMap.getOrDefault(questionId, 0);
-                                        }
-                                        final int totalScore = totalScoreHolder[0];
-                                        final int solvedCount = solvedQuestionsMap.size();
-
-                                        // Fetch user details
-                                        return userRepository.findById(participantUserId)
-                                            .map(user -> {
-                                              LeaderboardEntryDto entry = new LeaderboardEntryDto();
-                                              entry.setUserId(user.getId());
-                                              entry.setUsername(user.getUsername());
-                                              entry.setTotalScore(totalScore);
-                                              entry.setSolvedProblems(solvedCount);
-                                              return entry;
-                                            });
-                                      });
-                                })
+                            // Get all accepted submissions for this user in this contest
+                            return submissionRepository.findByUserIdAndContestId(participantUserId, contestId)
+                                .filter(submission -> "Accepted".equals(submission.getStatus()))
                                 .collectList()
-                                .map(leaderboardEntries -> {
-                                  // Sort by score (descending), then by solved problems (descending)
-                                  List<LeaderboardEntryDto> sortedEntries = leaderboardEntries.stream()
-                                      .sorted((e1, e2) -> {
-                                        int scoreCompare = e2.getTotalScore().compareTo(e1.getTotalScore());
-                                        if (scoreCompare != 0) {
-                                          return scoreCompare;
-                                        }
-                                        return e2.getSolvedProblems().compareTo(e1.getSolvedProblems());
-                                      })
-                                      .collect(Collectors.toList());
+                                .flatMap(submissions -> {
+                                  // Group by questionId to get unique solved questions
+                                  Map<Long, Submission> solvedQuestionsMap = new HashMap<>();
+                                  for (Submission sub : submissions) {
+                                    solvedQuestionsMap.putIfAbsent(sub.getQuestionId(), sub);
+                                  }
 
-                                  // Assign ranks and take top 5
-                                  AtomicInteger rank = new AtomicInteger(1);
-                                  List<LeaderboardEntryDto> top5 = sortedEntries.stream()
-                                      .peek(entry -> entry.setRank(rank.getAndIncrement()))
-                                      .limit(5)
-                                      .collect(Collectors.toList());
+                                  // Calculate total score
+                                  final int[] totalScoreHolder = {0};
+                                  for (Long questionId : solvedQuestionsMap.keySet()) {
+                                    totalScoreHolder[0] += questionPointsMap.getOrDefault(questionId, 0);
+                                  }
+                                  final int totalScore = totalScoreHolder[0];
+                                  final int solvedCount = solvedQuestionsMap.size();
 
-                                  ContestLeaderboardResponse response = new ContestLeaderboardResponse();
-                                  response.setContestId(contest.getId());
-                                  response.setContestName(contest.getName());
-                                  response.setLeaderboard(top5);
-
-                                  return new ResponseEntity<>(response, "Leaderboard retrieved successfully");
+                                  // Fetch user details
+                                  return userRepository.findById(participantUserId)
+                                      .map(user -> {
+                                        LeaderboardEntryDto entry = new LeaderboardEntryDto();
+                                        entry.setUserId(user.getId());
+                                        entry.setUsername(user.getUsername());
+                                        entry.setTotalScore(totalScore);
+                                        entry.setSolvedProblems(solvedCount);
+                                        return entry;
+                                      });
                                 });
+                          })
+                          .collectList()
+                          .map(leaderboardEntries -> {
+                            // Sort by score (descending), then by solved problems (descending)
+                            List<LeaderboardEntryDto> sortedEntries = leaderboardEntries.stream()
+                                .sorted((e1, e2) -> {
+                                  int scoreCompare = e2.getTotalScore().compareTo(e1.getTotalScore());
+                                  if (scoreCompare != 0) {
+                                    return scoreCompare;
+                                  }
+                                  return e2.getSolvedProblems().compareTo(e1.getSolvedProblems());
+                                })
+                                .collect(Collectors.toList());
+
+                            // Assign ranks and take top 5
+                            AtomicInteger rank = new AtomicInteger(1);
+                            List<LeaderboardEntryDto> top5 = sortedEntries.stream()
+                                .peek(entry -> entry.setRank(rank.getAndIncrement()))
+                                .limit(5)
+                                .collect(Collectors.toList());
+
+                            ContestLeaderboardResponse response = new ContestLeaderboardResponse();
+                            response.setContestId(contest.getId());
+                            response.setContestName(contest.getName());
+                            response.setLeaderboard(top5);
+
+                            return response;
                           });
                     });
               });

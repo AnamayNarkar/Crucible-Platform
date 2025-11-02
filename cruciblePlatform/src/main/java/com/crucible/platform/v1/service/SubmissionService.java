@@ -42,6 +42,7 @@ public class SubmissionService {
     private final UserContestRepository userContestRepository;
     private final ContestRepository contestRepository;
     private final PistonClient pistonClient;
+    private final ContestService contestService;
 
     private static final Logger logger = LoggerFactory.getLogger(SubmissionService.class);
 
@@ -51,13 +52,15 @@ public class SubmissionService {
             TestCaseRepository testCaseRepository,
             UserContestRepository userContestRepository,
             ContestRepository contestRepository,
-            PistonClient pistonClient) {
+            PistonClient pistonClient,
+            ContestService contestService) {
         this.submissionRepository = submissionRepository;
         this.questionRepository = questionRepository;
         this.testCaseRepository = testCaseRepository;
         this.userContestRepository = userContestRepository;
         this.contestRepository = contestRepository;
         this.pistonClient = pistonClient;
+        this.contestService = contestService;
     }
 
     /**
@@ -303,9 +306,11 @@ public class SubmissionService {
         return submissionRepository.save(submission)
             .flatMap(updated -> {
                 // If this is a contest submission and it's accepted, update user contest stats
+                // and push a fresh leaderboard snapshot to any connected SSE clients
                 if (updated.getContestId() != null && "Accepted".equals(status)) {
                     return updateUserContestStats(updated.getUserId(), updated.getContestId(),
                             updated.getQuestionId())
+                        .then(contestService.refreshAndBroadcastLeaderboard(updated.getContestId()))
                         .then(createSubmissionResponse(updated, passedCount, totalCount, isRun, testCaseResults));
                 } else {
                     return createSubmissionResponse(updated, passedCount, totalCount, isRun, testCaseResults);

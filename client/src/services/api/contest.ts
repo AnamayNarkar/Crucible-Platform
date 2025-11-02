@@ -236,6 +236,41 @@ export async function getContestLeaderboard(contestId: number): Promise<ContestL
 }
 
 /**
+ * Subscribe to live leaderboard updates for a contest via Server-Sent Events.
+ * The server pushes the current standings immediately on connect, and again
+ * every time a submission is accepted.
+ * @param contestId - The contest ID
+ * @param onUpdate - Called with the latest leaderboard snapshot
+ * @param onError - Called when the underlying connection errors (e.g. dropped/reconnecting)
+ * @returns The underlying EventSource; call .close() to stop listening
+ */
+export function subscribeToContestLeaderboard(
+  contestId: number,
+  onUpdate: (data: ContestLeaderboardResponse) => void,
+  onError?: (event: Event) => void
+): EventSource {
+  const baseURL = axiosInstance.defaults.baseURL || '';
+  const eventSource = new EventSource(`${baseURL}/contests/${contestId}/leaderboard/stream`, {
+    withCredentials: true,
+  });
+
+  eventSource.addEventListener('leaderboard', (event: MessageEvent) => {
+    try {
+      const data = JSON.parse(event.data) as ContestLeaderboardResponse;
+      onUpdate(data);
+    } catch (err) {
+      console.error('Failed to parse leaderboard SSE payload:', err);
+    }
+  });
+
+  if (onError) {
+    eventSource.onerror = onError;
+  }
+
+  return eventSource;
+}
+
+/**
  * Get manage contest data (contest details, admins, questions)
  * @param contestId - The contest ID
  */

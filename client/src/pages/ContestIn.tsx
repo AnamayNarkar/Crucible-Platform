@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
-import { getContestQuestions, participateInContest, getContestLeaderboard } from '../services/api/contest';
+import { getContestQuestions, participateInContest, getContestLeaderboard, subscribeToContestLeaderboard } from '../services/api/contest';
 import type { ContestQuestionsResponse, LeaderboardEntry } from '../services/types/contest';
 
 const ContestIn = () => {
@@ -11,6 +11,7 @@ const ContestIn = () => {
   const [loading, setLoading] = useState(true);
   const [participating, setParticipating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [liveConnected, setLiveConnected] = useState(false);
 
   useEffect(() => {
     const fetchContestData = async () => {
@@ -38,6 +39,24 @@ const ContestIn = () => {
 
     fetchContestData();
   }, [contestId]);
+
+  // Keep the leaderboard live once the user has participated: the server pushes
+  // the current standings on connect and again whenever a submission is accepted.
+  useEffect(() => {
+    if (!contestId || !contestData?.hasParticipated) return;
+
+    const eventSource = subscribeToContestLeaderboard(
+      parseInt(contestId),
+      (data) => setLeaderboard(data.leaderboard),
+      () => setLiveConnected(false)
+    );
+    eventSource.onopen = () => setLiveConnected(true);
+
+    return () => {
+      eventSource.close();
+      setLiveConnected(false);
+    };
+  }, [contestId, contestData?.hasParticipated]);
 
   const fetchLeaderboard = async () => {
     if (!contestId) return;
@@ -197,15 +216,30 @@ const ContestIn = () => {
             <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Leaderboard</h2>
               {contestData?.hasParticipated && (
-                <button
-                  onClick={fetchLeaderboard}
-                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
-                  title="Refresh leaderboard"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                  </svg>
-                </button>
+                <div className="flex items-center space-x-3">
+                  <span
+                    className={`flex items-center gap-1.5 text-xs font-medium ${
+                      liveConnected ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
+                    }`}
+                    title={liveConnected ? 'Receiving live updates' : 'Connecting to live updates...'}
+                  >
+                    <span
+                      className={`w-2 h-2 rounded-full ${
+                        liveConnected ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
+                      }`}
+                    ></span>
+                    {liveConnected ? 'Live' : 'Connecting...'}
+                  </span>
+                  <button
+                    onClick={fetchLeaderboard}
+                    className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+                    title="Refresh leaderboard"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                  </button>
+                </div>
               )}
             </div>
             
